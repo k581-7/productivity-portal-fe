@@ -10,7 +10,7 @@ export default function UserManagement() {
       return;
     }
 
-    fetch('/api/v1/users', {
+    fetch('http://localhost:3000/api/v1/users', {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -19,14 +19,17 @@ export default function UserManagement() {
         if (!res.ok) throw new Error('Forbidden');
         return res.json();
       })
-      .then(data => setUsers(data))
+      .then(data => {
+        console.log('Fetched users:', data); // Add this to verify data
+        setUsers(data);
+      })
       .catch(err => {
         console.error('Access denied or error fetching users:', err);
       });
   }, [token]);
 
   const updateRole = (id, role) => {
-    fetch(`/api/v1/users/${id}`, {
+    fetch(`http://localhost:3000/api/v1/users/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
