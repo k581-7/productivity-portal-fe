@@ -4,6 +4,9 @@ import Dashboard from './Dashboard';
 import UserManagement from './pages/UserManagement';
 import LoginButton from './components/LoginButton';
 import ProdEntries from './pages/ProdEntries';
+import Suppliers from './pages/Suppliers';
+import SupplierDetail from './pages/SupplierDetail';
+import SupplierCreate from './pages/SupplierCreate';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -38,6 +41,9 @@ export default function App() {
       <Route path="/" element={<LoginButton />} />
       <Route path="/dashboard" element={<Dashboard user={user} />} />
       <Route path="/prod-entries" element={<ProdEntries />} />
+      <Route path="/suppliers" element={<Suppliers />} />
+      <Route path="/suppliers/create" element={<SupplierCreate />} />
+      <Route path="/suppliers/:id" element={<SupplierDetail />} />
       <Route
         path="/user-management"
         element={
