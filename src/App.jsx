@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import UserManagement from './pages/UserManagement';
 import LoginButton from './components/LoginButton';
+import ProdEntries from './pages/ProdEntries';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -36,6 +37,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LoginButton />} />
       <Route path="/dashboard" element={<Dashboard user={user} />} />
+      <Route path="/prod-entries" element={<ProdEntries />} />
       <Route
         path="/user-management"
         element={

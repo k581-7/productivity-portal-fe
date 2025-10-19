@@ -11,7 +11,7 @@ export default function Navbar({ user }) {
 
       <div className="navbar-links">
         <Link to="/dashboard">Dashboard</Link>
-        <Link to="/prod-entry">Prod Entry</Link>
+        <Link to="/prod-entries">Productivity Entry</Link>
         <Link to="/suppliers">Suppliers</Link>
         <Link to="/daily-prod">Daily Prod</Link>
         <Link to="/summary-dashboard">Summary</Link>
