@@ -5,7 +5,7 @@ import './ProdEntries.css';
 
 export default function ProdEntries() {
   const [user, setUser] = useState(null);
-  const [suppliers, setSuppliers] = useState([]); // Default to empty array
+  const [suppliers, setSuppliers] = useState([]);
   const [juniorUsers, setJuniorUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,7 +23,7 @@ export default function ProdEntries() {
     no_result: 0,
     duplicate: 0,
     reactivated: 0,
-    source: 0,
+    source: 0, //kept, but unused
     remarks: ''
   });
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
@@ -64,7 +64,6 @@ export default function ProdEntries() {
         
         if (suppliersRes.ok) {
           const suppliersData = await suppliersRes.json();
-          // Ensure it's an array
           if (Array.isArray(suppliersData)) {
             setSuppliers(suppliersData);
           } else {
@@ -127,9 +126,12 @@ export default function ProdEntries() {
       const payload = {
         prod_entry: {
           ...formData,
-          entered_by_user_id: user.id
+          entered_by_user_id: user.id,
+          source: 0 // Always send source: 0 (API) since we removed the field
         }
       };
+
+      console.log('Submitting payload:', payload); // For debugging
 
       const res = await fetch('http://localhost:3000/api/v1/prod_entries', {
         method: 'POST',
@@ -142,6 +144,7 @@ export default function ProdEntries() {
 
       if (!res.ok) {
         const errorData = await res.json();
+        console.error('Error response:', errorData); // For debugging
         throw new Error(errorData.error || 'Failed to create prod entry');
       }
 
@@ -179,6 +182,32 @@ export default function ProdEntries() {
     setTimeout(() => {
       setNotification({ show: false, message: '', type: '' });
     }, 3000);
+  };
+
+  // Helper function to determine if a field should be disabled
+  const isFieldDisabled = (fieldName) => {
+    const mappingType = Number(formData.mapping_type);
+    
+    // Manual fields: manually_mapped, incorrect_supplier_data, created_property, insufficient_info, reactivated
+    const manualFields = ['manually_mapped', 'incorrect_supplier_data', 'created_property', 'insufficient_info', 'reactivated'];
+    
+    // Auto fields: accepted, dismissed, no_result, duplicate
+    const autoFields = ['accepted', 'dismissed', 'no_result', 'duplicate'];
+    
+    // Mapping Type 0 = Auto: disable manual fields
+    if (mappingType === 0 && manualFields.includes(fieldName)) {
+      return true;
+    }
+    
+    // Mapping Type 1 = Manual: disable auto fields
+    if (mappingType === 1 && autoFields.includes(fieldName)) {
+      return true;
+    }
+    
+    // Mapping Type 2 = Hybrid: all fields enabled
+    // No fields are disabled for hybrid
+    
+    return false;
   };
 
   if (loading) {
@@ -231,8 +260,8 @@ export default function ProdEntries() {
         )}
 
         <form onSubmit={handleSubmit} className="prod-entry-form">
-          {/* User Selection */}
-          {canAssignToOthers && juniorUsers.length > 0 && (
+          {/* User Selection - Show for both leader and developer */}
+          {canAssignToOthers && (
             <div className="form-group">
               <label htmlFor="assigned_user_id">
                 Assign to User: <span className="required">*</span>
@@ -245,13 +274,15 @@ export default function ProdEntries() {
                 required
               >
                 <option value={user.id}>Myself ({user.email})</option>
-                <optgroup label="Junior Users">
-                  {juniorUsers.map(junior => (
-                    <option key={junior.id} value={junior.id}>
-                      {junior.name || junior.email}
-                    </option>
-                  ))}
-                </optgroup>
+                {juniorUsers.length > 0 && (
+                  <optgroup label="Junior Users">
+                    {juniorUsers.map(junior => (
+                      <option key={junior.id} value={junior.id}>
+                        {junior.name || junior.email}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             </div>
           )}
@@ -308,20 +339,7 @@ export default function ProdEntries() {
             </select>
           </div>
 
-          {/* Source */}
-          <div className="form-group">
-            <label htmlFor="source">Source:</label>
-            <select
-              id="source"
-              name="source"
-              value={formData.source}
-              onChange={handleInputChange}
-            >
-              <option value={0}>API</option>
-              <option value={1}>Manual Upload</option>
-              <option value={2}>CSV Import</option>
-            </select>
-          </div>
+          {/* SOURCE FIELD REMOVED FROM UI - but still sent in payload with value 0 */}
 
           {/* Numeric Fields Grid */}
           <div className="form-grid">
@@ -334,6 +352,8 @@ export default function ProdEntries() {
                 value={formData.manually_mapped}
                 onChange={handleInputChange}
                 min="0"
+                disabled={isFieldDisabled('manually_mapped')}
+                className={isFieldDisabled('manually_mapped') ? 'disabled-field' : ''}
               />
             </div>
 
@@ -346,6 +366,8 @@ export default function ProdEntries() {
                 value={formData.incorrect_supplier_data}
                 onChange={handleInputChange}
                 min="0"
+                disabled={isFieldDisabled('incorrect_supplier_data')}
+                className={isFieldDisabled('incorrect_supplier_data') ? 'disabled-field' : ''}
               />
             </div>
 
@@ -358,6 +380,8 @@ export default function ProdEntries() {
                 value={formData.created_property}
                 onChange={handleInputChange}
                 min="0"
+                disabled={isFieldDisabled('created_property')}
+                className={isFieldDisabled('created_property') ? 'disabled-field' : ''}
               />
             </div>
 
@@ -370,6 +394,8 @@ export default function ProdEntries() {
                 value={formData.insufficient_info}
                 onChange={handleInputChange}
                 min="0"
+                disabled={isFieldDisabled('insufficient_info')}
+                className={isFieldDisabled('insufficient_info') ? 'disabled-field' : ''}
               />
             </div>
 
@@ -382,6 +408,8 @@ export default function ProdEntries() {
                 value={formData.accepted}
                 onChange={handleInputChange}
                 min="0"
+                disabled={isFieldDisabled('accepted')}
+                className={isFieldDisabled('accepted') ? 'disabled-field' : ''}
               />
             </div>
 
@@ -394,6 +422,8 @@ export default function ProdEntries() {
                 value={formData.dismissed}
                 onChange={handleInputChange}
                 min="0"
+                disabled={isFieldDisabled('dismissed')}
+                className={isFieldDisabled('dismissed') ? 'disabled-field' : ''}
               />
             </div>
 
@@ -406,6 +436,8 @@ export default function ProdEntries() {
                 value={formData.no_result}
                 onChange={handleInputChange}
                 min="0"
+                disabled={isFieldDisabled('no_result')}
+                className={isFieldDisabled('no_result') ? 'disabled-field' : ''}
               />
             </div>
 
@@ -418,6 +450,8 @@ export default function ProdEntries() {
                 value={formData.duplicate}
                 onChange={handleInputChange}
                 min="0"
+                disabled={isFieldDisabled('duplicate')}
+                className={isFieldDisabled('duplicate') ? 'disabled-field' : ''}
               />
             </div>
 
@@ -430,6 +464,8 @@ export default function ProdEntries() {
                 value={formData.reactivated}
                 onChange={handleInputChange}
                 min="0"
+                disabled={isFieldDisabled('reactivated')}
+                className={isFieldDisabled('reactivated') ? 'disabled-field' : ''}
               />
             </div>
           </div>
