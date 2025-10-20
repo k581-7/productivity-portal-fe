@@ -165,10 +165,9 @@ export default function SupplierCreate() {
                     value={formData.priority}
                     onChange={handleInputChange}
                   >
-                    <option value={1}>Low</option>
-                    <option value={2}>Medium</option>
-                    <option value={3}>High</option>
-                    <option value={4}>Critical</option>
+                    <option value={0}>Low</option>
+                    <option value={1}>Medium</option>
+                    <option value={2}>High</option>
                   </select>
                 </div>
 
@@ -180,10 +179,10 @@ export default function SupplierCreate() {
                     value={formData.status}
                     onChange={handleInputChange}
                   >
-                    <option value={1}>Pending</option>
-                    <option value={2}>In Progress</option>
+                    <option value={0}>Queued</option>
+                    <option value={1}>Ongoing</option>
+                    <option value={2}>Cancelled</option>
                     <option value={3}>Completed</option>
-                    <option value={4}>On Hold</option>
                   </select>
                 </div>
               </div>

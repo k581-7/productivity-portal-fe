@@ -81,10 +81,10 @@ export default function Suppliers() {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      1: { label: 'Pending', class: 'status-pending' },
-      2: { label: 'In Progress', class: 'status-in-progress' },
-      3: { label: 'Completed', class: 'status-completed' },
-      4: { label: 'On Hold', class: 'status-on-hold' }
+      0: { label: 'Queued', class: 'status-queued' },
+      1: { label: 'Ongoing', class: 'status-ongoing' },
+      2: { label: 'Cancelled', class: 'status-cancelled' },
+      3: { label: 'Completed ', class: 'status-completed' }
     };
     const statusInfo = statusMap[status] || { label: 'Unknown', class: '' };
     return <span className={`status-badge ${statusInfo.class}`}>{statusInfo.label}</span>;
