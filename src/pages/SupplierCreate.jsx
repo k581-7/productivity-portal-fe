@@ -77,6 +77,31 @@ export default function SupplierCreate() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Convert string values to integers
+    const submissionData = {
+      ...formData,
+      priority: parseInt(formData.priority),
+      status: parseInt(formData.status),
+      total_requests: parseInt(formData.total_requests) || 0,
+      total_mapped: parseInt(formData.total_mapped) || 0,
+      total_pending: parseInt(formData.total_pending) || 0,
+      automapping_covered_total: parseInt(formData.automapping_covered_total) || 0,
+      suggestions_total: parseInt(formData.suggestions_total) || 0,
+      accepted_total: parseInt(formData.accepted_total) || 0,
+      dismissed_total: parseInt(formData.dismissed_total) || 0,
+      manual_total: parseInt(formData.manual_total) || 0,
+      manually_mapped: parseInt(formData.manually_mapped) || 0,
+      incorrect_supplier_data: parseInt(formData.incorrect_supplier_data) || 0,
+      duplicate_count: parseInt(formData.duplicate_count) || 0,
+      created_property: parseInt(formData.created_property) || 0,
+      not_covered: parseInt(formData.not_covered) || 0,
+      nc_manually_mapped: parseInt(formData.nc_manually_mapped) || 0,
+      nc_created_property: parseInt(formData.nc_created_property) || 0,
+      nc_incorrect_supplier: parseInt(formData.nc_incorrect_supplier) || 0,
+      jp_props: parseInt(formData.jp_props) || 0,
+      reactivated_total: parseInt(formData.reactivated_total) || 0
+    };
+
     try {
       const res = await fetch('http://localhost:3000/api/v1/suppliers', {
         method: 'POST',
@@ -84,7 +109,7 @@ export default function SupplierCreate() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ supplier: formData })
+        body: JSON.stringify({ supplier: submissionData })
       });
 
       if (!res.ok) {
