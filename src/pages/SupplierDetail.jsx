@@ -129,6 +129,17 @@ export default function SupplierDetail() {
     });
   };
 
+  // Helper functions to get readable labels
+  const getPriorityLabel = (priority) => {
+    const labels = { 0: 'Low', 1: 'Medium', 2: 'High' };
+    return labels[priority] || 'N/A';
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = { 0: 'Queued', 1: 'Ongoing', 2: 'Cancelled', 3: 'Completed' };
+    return labels[status] || 'N/A';
+  };
+
   const canEdit = user?.role === 'leader' || user?.role === 'developer';
 
   if (loading) {
@@ -228,13 +239,12 @@ export default function SupplierDetail() {
                     <select
                       id="priority"
                       name="priority"
-                      value={formData.priority || 1}
+                      value={formData.priority ?? 0}
                       onChange={handleInputChange}
                     >
-                      <option value={1}>Low</option>
-                      <option value={2}>Medium</option>
-                      <option value={3}>High</option>
-                      <option value={4}>Critical</option>
+                      <option value={0}>Low</option>
+                      <option value={1}>Medium</option>
+                      <option value={2}>High</option>
                     </select>
                   </div>
 
@@ -243,13 +253,13 @@ export default function SupplierDetail() {
                     <select
                       id="status"
                       name="status"
-                      value={formData.status || 1}
+                      value={formData.status ?? 0}
                       onChange={handleInputChange}
                     >
-                      <option value={1}>Pending</option>
-                      <option value={2}>In Progress</option>
+                      <option value={0}>Queued</option>
+                      <option value={1}>Ongoing</option>
+                      <option value={2}>Cancelled</option>
                       <option value={3}>Completed</option>
-                      <option value={4}>On Hold</option>
                     </select>
                   </div>
                 </div>
@@ -568,11 +578,11 @@ export default function SupplierDetail() {
                   </div>
                   <div className="info-item">
                     <span className="label">Priority:</span>
-                    <span className="value">{['Low', 'Medium', 'High', 'Critical'][supplier.priority - 1] || 'N/A'}</span>
+                    <span className="value">{getPriorityLabel(supplier.priority)}</span>
                   </div>
                   <div className="info-item">
                     <span className="label">Status:</span>
-                    <span className="value">{['Pending', 'In Progress', 'Completed', 'On Hold'][supplier.status - 1] || 'N/A'}</span>
+                    <span className="value">{getStatusLabel(supplier.status)}</span>
                   </div>
                   <div className="info-item">
                     <span className="label">Request Date:</span>
