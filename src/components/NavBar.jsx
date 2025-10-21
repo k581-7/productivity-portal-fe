@@ -11,7 +11,8 @@ export default function Navbar({ user }) {
 
       <div className="navbar-links">
         <Link to="/dashboard">Dashboard</Link>
-        <Link to="/prod-entries">Productivity Entry</Link>
+        {/* Hide Productivity Entry for guests */}
+        {user?.role !== 'guest' && <Link to="/prod-entries">Productivity Entry</Link>}
         <Link to="/suppliers">Suppliers</Link>
         <Link to="/daily-prod">Daily Prod</Link>
         <Link to="/summary-dashboard">Summary</Link>

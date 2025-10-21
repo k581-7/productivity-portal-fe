@@ -274,15 +274,12 @@ export default function ProdEntries() {
                 required
               >
                 <option value={user.id}>Myself ({user.email})</option>
-                {juniorUsers.length > 0 && (
-                  <optgroup label="Junior Users">
-                    {juniorUsers.map(junior => (
-                      <option key={junior.id} value={junior.id}>
-                        {junior.name || junior.email}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
+                {/* Remove the optgroup wrapper */}
+                {juniorUsers.length > 0 && juniorUsers.map(junior => (
+                  <option key={junior.id} value={junior.id}>
+                    {junior.name || junior.email}
+                  </option>
+                ))}
               </select>
             </div>
           )}
