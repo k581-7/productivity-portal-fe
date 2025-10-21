@@ -131,12 +131,18 @@ export default function SupplierDetail() {
 
   // Helper functions to get readable labels
   const getPriorityLabel = (priority) => {
-    const labels = { 0: 'Low', 1: 'Medium', 2: 'High' };
+    const labels = { 
+      0: 'Low', 1: 'Medium', 2: 'High',
+      'low': 'Low', 'medium': 'Medium', 'high': 'High'
+    };
     return labels[priority] || 'N/A';
   };
 
   const getStatusLabel = (status) => {
-    const labels = { 0: 'Queued', 1: 'Ongoing', 2: 'Cancelled', 3: 'Completed' };
+    const labels = { 
+      0: 'Queued', 1: 'Ongoing', 2: 'Cancelled', 3: 'Completed',
+      'queued': 'Queued', 'ongoing': 'Ongoing', 'cancelled': 'Cancelled', 'completed': 'Completed'
+    };
     return labels[status] || 'N/A';
   };
 
