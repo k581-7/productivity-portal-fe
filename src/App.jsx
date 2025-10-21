@@ -7,6 +7,8 @@ import ProdEntries from './pages/ProdEntries';
 import Suppliers from './pages/Suppliers';
 import SupplierDetail from './pages/SupplierDetail';
 import SupplierCreate from './pages/SupplierCreate';
+import DailyProd from './pages/DailyProd';
+import Summary from './pages/Summary';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -44,6 +46,8 @@ export default function App() {
       <Route path="/suppliers" element={<Suppliers />} />
       <Route path="/suppliers/create" element={<SupplierCreate />} />
       <Route path="/suppliers/:id" element={<SupplierDetail />} />
+      <Route path="/daily-prod" element={<DailyProd />} />
+      <Route path="/summary" element={<Summary />} />
       <Route
         path="/user-management"
         element={
