@@ -4,7 +4,7 @@ import './DailyProd.css';
 
 const DailyProd = () => {
   const [dailyProds, setDailyProds] = useState([]);
-  const [allUsers, setAllUsers] = useState([]); // ADD THIS LINE
+  const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState('October');
   const [selectedYear, setSelectedYear] = useState('2025');
@@ -16,69 +16,114 @@ const DailyProd = () => {
   const token = localStorage.getItem('token');
 
   useEffect(() => {
+    // fetch both; fetchDailyProds triggers when we set user (see next effect)
     fetchCurrentUser();
-    fetchAllUsers(); // ADD THIS LINE
+    fetchAllUsers();
   }, []);
 
   useEffect(() => {
-    if (user && allUsers.length > 0) { // MODIFY THIS LINE
+    // Fetch daily prods as soon as we have the current user.
+    if (user) {
       fetchDailyProds();
     }
-  }, [selectedMonth, selectedYear, user, allUsers]); // MODIFY THIS LINE
+  }, [selectedMonth, selectedYear, user, allUsers]);
 
   const fetchCurrentUser = async () => {
     try {
       const res = await fetch('http://localhost:3000/api/v1/current_user', {
         headers: { Authorization: `Bearer ${token}` }
       });
+      if (!res.ok) {
+        console.error('fetchCurrentUser failed', res.status);
+        return;
+      }
       const userData = await res.json();
+      console.log('DailyProd: fetched current_user', userData);
       setUser(userData);
     } catch (error) {
       console.error('Error fetching user:', error);
     }
   };
 
-  // ADD THIS ENTIRE FUNCTION
   const fetchAllUsers = async () => {
     try {
       const res = await fetch('http://localhost:3000/api/v1/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const users = await res.json();
-      // Filter only active users (not guests)
-      const activeUsers = users.filter(u => u.role !== 'guest' && u.status === 'active');
-      setAllUsers(activeUsers);
+      if (!res.ok) {
+        console.error('fetchAllUsers failed', res.status);
+        setAllUsers([]);
+        return;
+      }
+      const payload = await res.json();
+      // Some APIs may return { users: [...] } or [...]. Handle both.
+      const users = Array.isArray(payload) ? payload : (payload.users || payload.data || []);
+      console.log('DailyProd: fetched users count', (users && users.length) || 0, payload);
+      setAllUsers(Array.isArray(users) ? users : []);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setAllUsers([]);
     }
   };
 
+  // <-- Use the correct namespaced backend path (/api/v1/daily_prods)
   const fetchDailyProds = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/daily_prods?month=${selectedMonth}&year=${selectedYear}`, {
+      const response = await fetch(`http://localhost:3000/api/v1/daily_prods?month=${selectedMonth}&year=${selectedYear}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      if (!response.ok) {
+        console.error('fetchDailyProds failed', response.status);
+        setDailyProds([]);
+        setLoading(false);
+        return;
+      }
       const data = await response.json();
-      
+      console.log('DailyProd: fetched daily_prods length', Array.isArray(data) ? data.length : 0, data);
+
       const groupedData = processData(data);
-      setDailyProds(groupedData);
+
+      // If no grouped rows but we have allUsers, show placeholder rows for active users
+      if ((!groupedData || groupedData.length === 0) && allUsers.length > 0) {
+        console.log('DailyProd: groupedData empty — creating placeholder rows from allUsers');
+        const fallback = allUsers.map(u => ({
+          userId: u.id,
+          userName: u.name || u.email || `User ${u.id}`,
+          entries: [],
+          totals: {
+            accepted: 0,
+            dismissed: 0,
+            autoMap: 0,
+            duplicates: 0,
+            manualMap: 0,
+            cannotBeMapped: 0,
+            createdProperty: 0,
+            overallTotal: 0
+          }
+        }));
+        setDailyProds(fallback);
+      } else {
+        setDailyProds(groupedData);
+      }
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching daily prods:', error);
+      setDailyProds([]);
       setLoading(false);
     }
   };
 
-  // REPLACE THE ENTIRE processData FUNCTION
+  // processData ensures users referenced by entries are included even if not present in allUsers
   const processData = (data) => {
     const userMap = {};
-    
-    // Initialize all active users first
-    allUsers.forEach(user => {
-      userMap[user.id] = {
-        userId: user.id,
-        userName: user.name || user.email,
+
+    // Initialize from allUsers first
+    allUsers.forEach(u => {
+      userMap[u.id] = {
+        userId: u.id,
+        userName: u.name || u.email || `User ${u.id}`,
         entries: [],
         totals: {
           accepted: 0,
@@ -92,30 +137,47 @@ const DailyProd = () => {
         }
       };
     });
-    
-    // Process entries
-    data.forEach(entry => {
-      if (userMap[entry.user_id]) {
-        userMap[entry.user_id].entries.push(entry);
-        
-        // Calculate totals
-        const accepted = entry.accepted || 0;
-        const dismissed = entry.dismissed || 0;
-        const autoMap = accepted + dismissed;
-        const duplicates = entry.duplicate || 0;
-        const manualMap = entry.manually_mapped || 0;
-        const cannotBeMapped = (entry.incorrect_supplier_data || 0) + (entry.insufficient_info || 0);
-        const createdProperty = entry.created_property || 0;
-        
-        userMap[entry.user_id].totals.accepted += accepted;
-        userMap[entry.user_id].totals.dismissed += dismissed;
-        userMap[entry.user_id].totals.autoMap += autoMap;
-        userMap[entry.user_id].totals.duplicates += duplicates;
-        userMap[entry.user_id].totals.manualMap += manualMap;
-        userMap[entry.user_id].totals.cannotBeMapped += cannotBeMapped;
-        userMap[entry.user_id].totals.createdProperty += createdProperty;
-        userMap[entry.user_id].totals.overallTotal += autoMap + manualMap + cannotBeMapped + createdProperty;
+
+    // Process entries and add fallback users if needed
+    (Array.isArray(data) ? data : []).forEach(entry => {
+      const uid = entry.user_id;
+      if (!userMap[uid]) {
+        userMap[uid] = {
+          userId: uid,
+          userName: entry.user_name || entry.user_email || `User ${uid}`,
+          entries: [],
+          totals: {
+            accepted: 0,
+            dismissed: 0,
+            autoMap: 0,
+            duplicates: 0,
+            manualMap: 0,
+            cannotBeMapped: 0,
+            createdProperty: 0,
+            overallTotal: 0
+          }
+        };
       }
+
+      userMap[uid].entries.push(entry);
+
+      // Calculate totals
+      const accepted = entry.accepted || 0;
+      const dismissed = entry.dismissed || 0;
+      const autoMap = accepted + dismissed;
+      const duplicates = entry.duplicate || 0;
+      const manualMap = entry.manually_mapped || 0;
+      const cannotBeMapped = (entry.incorrect_supplier_data || 0) + (entry.insufficient_info || 0);
+      const createdProperty = entry.created_property || 0;
+
+      userMap[uid].totals.accepted += accepted;
+      userMap[uid].totals.dismissed += dismissed;
+      userMap[uid].totals.autoMap += autoMap;
+      userMap[uid].totals.duplicates += duplicates;
+      userMap[uid].totals.manualMap += manualMap;
+      userMap[uid].totals.cannotBeMapped += cannotBeMapped;
+      userMap[uid].totals.createdProperty += createdProperty;
+      userMap[uid].totals.overallTotal += autoMap + manualMap + cannotBeMapped + createdProperty;
     });
 
     return Object.values(userMap);
@@ -126,7 +188,7 @@ const DailyProd = () => {
     const year = parseInt(selectedYear);
     const monthNumber = new Date(`${selectedMonth} 1, ${year}`).getMonth();
     const daysInMonth = new Date(year, monthNumber + 1, 0).getDate();
-    
+
     for (let i = 1; i <= daysInMonth; i++) {
       dates.push(new Date(year, monthNumber, i));
     }
@@ -143,54 +205,54 @@ const DailyProd = () => {
   const getCellData = (userId, date) => {
     const userData = dailyProds.find(u => u.userId === userId);
     if (!userData) return null;
-    
-    const entry = userData.entries.find(e => 
+
+    const entry = userData.entries.find(e =>
       new Date(e.date).toDateString() === date.toDateString()
     );
-    
+
     return entry;
   };
 
   const getCellColor = (entry) => {
     if (!entry) return '';
-    
+
     // Check for special statuses first
     if (entry.status === 'Exempted') return 'exempted';
     if (entry.status === 'Day Off') return 'day-off';
     if (entry.status === 'Offset') return 'offset';
     if (entry.status === 'Sick Leave' || entry.status === 'On Leave') return 'leave';
     if (entry.status === 'Offset + Entry') return 'offset-entry';
-    
+
     // Check mapping type (0 = Auto, 1 = Manual, 2 = Hybrid)
     if (entry.mapping_type === 0) return 'auto-mapping';
     if (entry.mapping_type === 1) return 'manual-mapping';
     if (entry.mapping_type === 2) return 'hybrid-mapping';
-    
+
     return '';
   };
 
   const getCellValue = (entry) => {
     if (!entry) return '';
-    
+
     // If it's a status, return the status
     if (['Exempted', 'Day Off', 'Offset', 'Sick Leave', 'On Leave', 'Offset + Entry'].includes(entry.status)) {
       return entry.status;
     }
-    
+
     // Calculate total productivity (everything except duplicates)
     const autoMap = (entry.accepted || 0) + (entry.dismissed || 0);
     const manualMap = entry.manually_mapped || 0;
     const cannotBeMapped = (entry.incorrect_supplier_data || 0) + (entry.insufficient_info || 0);
     const createdProperty = entry.created_property || 0;
-    
+
     const total = autoMap + manualMap + cannotBeMapped + createdProperty;
-    
+
     return total > 0 ? total : '';
   };
 
   const handleCellClick = (userId, date) => {
     if (user?.role !== 'developer') return;
-    
+
     const entry = getCellData(userId, date);
     const cellValue = getCellValue(entry);
     setEditingCell({ userId, date: date.toISOString() });
@@ -199,9 +261,9 @@ const DailyProd = () => {
 
   const handleCellBlur = async () => {
     if (!editingCell) return;
-    
+
     try {
-      await fetch(`http://localhost:3000/api/daily_prods/update_cell`, {
+      await fetch(`http://localhost:3000/api/v1/daily_prods/update_cell`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -213,12 +275,12 @@ const DailyProd = () => {
           value: editValue
         })
       });
-      
+
       await fetchDailyProds();
     } catch (error) {
       console.error('Error updating cell:', error);
     }
-    
+
     setEditingCell(null);
     setEditValue('');
   };
@@ -232,7 +294,6 @@ const DailyProd = () => {
     }
   };
 
-  // REPLACE calculateGrandTotals FUNCTION
   const calculateGrandTotals = () => {
     const grandTotals = {
       accepted: 0,
@@ -244,7 +305,7 @@ const DailyProd = () => {
       createdProperty: 0,
       overallTotal: 0
     };
-    
+
     dailyProds.forEach(user => {
       grandTotals.accepted += user.totals.accepted;
       grandTotals.dismissed += user.totals.dismissed;
@@ -255,14 +316,14 @@ const DailyProd = () => {
       grandTotals.createdProperty += user.totals.createdProperty;
       grandTotals.overallTotal += user.totals.overallTotal;
     });
-    
+
     return grandTotals;
   };
 
   const calculateDailyTotal = (date) => {
     let total = 0;
     dailyProds.forEach(user => {
-      const entry = user.entries.find(e => 
+      const entry = user.entries.find(e =>
         new Date(e.date).toDateString() === date.toDateString()
       );
       if (entry) {
@@ -293,7 +354,12 @@ const DailyProd = () => {
       <Navbar user={user} />
       <div className="daily-prod-container">
         <h1>Daily Mapping Productivity</h1>
-        
+
+        <div style={{ marginBottom: 8, color: '#fff' }}>
+          {/* Small debug helper visible in UI while you iterate */}
+          <strong>Debug:</strong> users={allUsers.length} rows={dailyProds.length}
+        </div>
+
         <div className="controls-row">
           <div className="left-controls">
             <div className="control-group">
@@ -372,7 +438,6 @@ const DailyProd = () => {
               <tr>
                 <th className="pic-header">PIC</th>
                 
-                {/* MODIFY: Show metric columns based on view */}
                 {viewMode === 'Detailed' ? (
                   <>
                     <th className="total-header">ACCEPTED</th>
