@@ -34,7 +34,7 @@ export default function Dashboard() {
   return (
     <div>
       <Navbar user={user} />
-      <div style={{ padding: '20px' }}>
+      <div className="app-container">
         <h1>Welcome to your dashboard!</h1>
         {user ? (
           <p>

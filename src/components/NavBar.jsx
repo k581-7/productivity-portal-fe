@@ -5,25 +5,29 @@ import './NavBar.css';
 export default function Navbar({ user }) {
   return (
     <nav className="navbar">
-      <div className="navbar-left">
-        <h3>Productivity Portal</h3>
-      </div>
+      <div className="app-container">
+        <div className="navbar-content">
+          <div className="navbar-brand">
+            <h3>Productivity Portal</h3>
+          </div>
 
-      <div className="navbar-links">
-        <Link to="/dashboard">Dashboard</Link>
-        {/* Hide Productivity Entry for guests */}
-        {user?.role !== 'guest' && <Link to="/prod-entries">Productivity Entry</Link>}
-        <Link to="/suppliers">Suppliers</Link>
-        <Link to="/daily-prod">Daily Prod</Link>
-        <Link to="/summary-dashboard">Summary</Link>
-        {user?.role === 'developer' && (
-          <Link to="/user-management">User Management</Link>
-        )}
-      </div>
+          <div className="navbar-links">
+            <Link to="/dashboard">Dashboard</Link>
+            {/* Hide Productivity Entry for guests */}
+            {user?.role !== 'guest' && <Link to="/prod-entries">Productivity Entry</Link>}
+            <Link to="/suppliers">Suppliers</Link>
+            <Link to="/daily-prod">Daily Prod</Link>
+            <Link to="/summary-dashboard">Summary</Link>
+            {user?.role === 'developer' && (
+              <Link to="/user-management">User Management</Link>
+            )}
+          </div>
 
-      <div className="navbar-right">
-        <span>{user?.name || 'Guest'}</span>
-        <a href="/">Logout</a>
+          <div className="navbar-right">
+            <span>Jinjoo Lane</span>
+            <a href="/">Logout</a>
+          </div>
+        </div>
       </div>
     </nav>
   );

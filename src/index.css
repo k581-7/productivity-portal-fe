@@ -1,5 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap');
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Changed font-family to use Noto Sans as primary */
+  font-family: 'Noto Sans', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -24,15 +27,17 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  /* Added Noto Sans to body as well */
+  font-family: 'Noto Sans', system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  /* Added Noto Sans to headings */
+  font-family: 'Noto Sans', system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
 button {
@@ -41,7 +46,8 @@ button {
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
-  font-family: inherit;
+  /* Changed to explicitly use Noto Sans */
+  font-family: 'Noto Sans', system-ui, Avenir, Helvetica, Arial, sans-serif;
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
@@ -52,6 +58,18 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Add this new rule to ensure all elements use Noto Sans */
+* {
+  font-family: 'Noto Sans', system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+/* App container: center page content and limit width */
+.app-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
 @media (prefers-color-scheme: light) {

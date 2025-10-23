@@ -1,21 +1,40 @@
 .navbar {
+  background-color: #2e7d32; /* green */
+  color: white;
+  padding: 0;
+  height: 48px; /* Make navbar thinner */
+}
+
+.navbar .app-container {
+  height: 100%;
+  padding: 0 20px;
+}
+
+.navbar-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #2e7d32; /* green */
-  padding: 10px 20px;
-  color: white;
+  height: 100%;
 }
 
 .navbar h3 {
   margin: 0;
+  font-size: 1.1rem;
+}
+
+.navbar-links {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 0 48px;
 }
 
 .navbar-links a {
-  margin: 0 10px;
   color: white;
   text-decoration: none;
   font-weight: 500;
+  font-size: 0.9rem;
 }
 
 .navbar-links a:hover {
@@ -24,6 +43,7 @@
 
 .navbar-right {
   display: flex;
-  gap: 15px;
+  gap: 24px;
   align-items: center;
+  font-size: 0.9rem;
 }

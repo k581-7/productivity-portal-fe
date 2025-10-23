@@ -131,18 +131,27 @@ export default function SupplierDetail() {
 
   // Helper functions to get readable labels
   const getPriorityLabel = (priority) => {
-    const labels = { 
-      0: 'Low', 1: 'Medium', 2: 'High',
-      'low': 'Low', 'medium': 'Medium', 'high': 'High'
+    if (!priority) return 'N/A';
+    
+    const labels = {
+      low: 'Low',
+      medium: 'Medium',
+      high: 'High'
     };
+    
     return labels[priority] || 'N/A';
   };
 
   const getStatusLabel = (status) => {
-    const labels = { 
-      0: 'Queued', 1: 'Ongoing', 2: 'Cancelled', 3: 'Completed',
-      'queued': 'Queued', 'ongoing': 'Ongoing', 'cancelled': 'Cancelled', 'completed': 'Completed'
+    if (!status) return 'N/A';
+    
+    const labels = {
+      queued: 'Queued',
+      ongoing: 'Ongoing',
+      cancelled: 'Cancelled',
+      completed: 'Completed'
     };
+    
     return labels[status] || 'N/A';
   };
 
@@ -245,12 +254,12 @@ export default function SupplierDetail() {
                     <select
                       id="priority"
                       name="priority"
-                      value={formData.priority ?? 0}
+                      value={formData.priority || 'low'}
                       onChange={handleInputChange}
                     >
-                      <option value={0}>Low</option>
-                      <option value={1}>Medium</option>
-                      <option value={2}>High</option>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
                     </select>
                   </div>
 
@@ -259,13 +268,13 @@ export default function SupplierDetail() {
                     <select
                       id="status"
                       name="status"
-                      value={formData.status ?? 0}
+                      value={formData.status || 'queued'}
                       onChange={handleInputChange}
                     >
-                      <option value={0}>Queued</option>
-                      <option value={1}>Ongoing</option>
-                      <option value={2}>Cancelled</option>
-                      <option value={3}>Completed</option>
+                      <option value="queued">Queued</option>
+                      <option value="ongoing">Ongoing</option>
+                      <option value="cancelled">Cancelled</option>
+                      <option value="completed">Completed</option>
                     </select>
                   </div>
                 </div>

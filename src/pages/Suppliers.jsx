@@ -80,16 +80,13 @@ export default function Suppliers() {
   };
 
   const getStatusBadge = (status) => {
-    // Handle both string enum keys and numeric values
+    if (status === null || status === undefined) return <span className="status-badge status-unknown">Unknown</span>;
+    
     const statusMap = {
-      0: { label: 'Queued', class: 'status-queued' },
-      1: { label: 'Ongoing', class: 'status-ongoing' },
-      2: { label: 'Cancelled', class: 'status-cancelled' },
-      3: { label: 'Completed', class: 'status-completed' },
-      'queued': { label: 'Queued', class: 'status-queued' },
-      'ongoing': { label: 'Ongoing', class: 'status-ongoing' },
-      'cancelled': { label: 'Cancelled', class: 'status-cancelled' },
-      'completed': { label: 'Completed', class: 'status-completed' }
+      queued: { label: 'Queued', class: 'status-queued' },
+      ongoing: { label: 'Ongoing', class: 'status-ongoing' },
+      cancelled: { label: 'Cancelled', class: 'status-cancelled' },
+      completed: { label: 'Completed', class: 'status-completed' }
     };
     
     const statusInfo = statusMap[status] || { label: 'Unknown', class: 'status-unknown' };
