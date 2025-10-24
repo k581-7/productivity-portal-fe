@@ -1,46 +1,92 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/NavBar';
+import {
+  Box,
+  Paper,
+  Typography,
+  Grid,
+  Chip,
+  IconButton,
+  Tooltip,
+  Stack,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
+} from '@mui/material';
+import { DataGrid, GridToolbar } from '@mui/x-data-grid';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import CalendarViewMonthIcon from '@mui/icons-material/CalendarViewMonth';
+import TableViewIcon from '@mui/icons-material/TableView';
+import EqualizerIcon from '@mui/icons-material/Equalizer';
 import './DailyProd.css';
 
-const DailyProd = () => {
+// Styled components for custom table cells
+const StyledTableCell = styled(TableCell)(({ theme, bgcolor, color }) => ({
+  backgroundColor: bgcolor || theme.palette.common.white,
+  color: color || theme.palette.common.black,
+  padding: '12px',
+  fontSize: 14,
+  '&.header': {
+    backgroundColor: '#7c3aed',
+    color: theme.palette.common.white,
+    fontWeight: 'bold',
+  },
+  '&.pic': {
+    position: 'sticky',
+    left: 0,
+    zIndex: 2,
+    backgroundColor: '#f3f4f6',
+    fontWeight: 500,
+  },
+  '&.total': {
+    backgroundColor: '#e5e7eb',
+    fontWeight: 'bold',
+  }
+}));
+
+const DailyProd = ({ user }) => {
   const [dailyProds, setDailyProds] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState('October');
   const [selectedYear, setSelectedYear] = useState('2025');
   const [viewMode, setViewMode] = useState('Standard');
-  const [user, setUser] = useState(null);
   const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState('');
 
   const token = localStorage.getItem('token');
 
   useEffect(() => {
-    fetchCurrentUser();
-    fetchAllUsers();
-  }, []);
+    if (user) {
+      fetchAllUsers();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user && allUsers.length > 0) {
       fetchDailyProds();
     }
   }, [selectedMonth, selectedYear, user, allUsers]);
-
-  const fetchCurrentUser = async () => {
-    try {
-      const res = await fetch('http://localhost:3000/api/v1/current_user', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) {
-        console.error('fetchCurrentUser failed', res.status);
-        return;
-      }
-      const userData = await res.json();
-      setUser(userData);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-    }
-  };
 
   const fetchAllUsers = async () => {
     try {
@@ -180,6 +226,8 @@ const DailyProd = () => {
     return `${day}-${month}-${year}`;
   };
 
+  const statusOptions = ['Exempted', 'Day Off', 'Offset/Leave'];
+
   const getCellData = (userId, date) => {
     const userData = dailyProds.find(u => u.userId === userId);
     if (!userData) return null;
@@ -189,31 +237,7 @@ const DailyProd = () => {
     );
   };
 
-  const getCellColor = (entry) => {
-    if (!entry || !entry.mapping_type) return '';
-
-    // Special statuses remain unchanged
-    if (entry.status === 'Exempted') return 'exempted';
-    if (entry.status === 'Day Off') return 'day-off';
-    if (entry.status === 'Offset') return 'offset';
-    if (entry.status === 'Sick Leave' || entry.status === 'On Leave') return 'offset';
-    if (entry.status === 'Offset + Entry') return 'offset-entry';
-
-    // Only show colors if there's an actual value
-    if (entry.overall_total <= 0) return '';
-
-    // Use mapping_type from backend to determine color
-    switch (entry.mapping_type) {
-      case 'auto':
-        return 'auto-mapping';
-      case 'manual':
-        return 'manual-mapping';
-      case 'hybrid':
-        return 'hybrid-mapping';
-      default:
-        return '';
-    }
-  };
+  const getCellColor = () => ''; // Deprecated - using getStatusColor instead
 
   const getCellValue = (entry) => {
     if (!entry) return '';
@@ -236,15 +260,21 @@ const DailyProd = () => {
     setEditValue(cellValue.toString());
   };
 
+  const handleStatusSelect = (status) => {
+    if (!editingCell) return;
+    setEditValue(status);
+    handleCellBlur();
+  };
+
   const handleCellBlur = async () => {
     if (!editingCell) return;
 
     try {
-      await fetch(`http://localhost:3000/api/v1/daily_prods/update_cell`, {
+      const response = await fetch(`http://localhost:3000/api/v1/daily_prods/update_cell`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           user_id: editingCell.userId,
@@ -253,7 +283,11 @@ const DailyProd = () => {
         })
       });
 
-      await fetchDailyProds();
+      if (response.ok) {
+        await fetchDailyProds();
+      } else {
+        console.error('Error updating cell:', await response.json());
+      }
     } catch (error) {
       console.error('Error updating cell:', error);
     }
@@ -313,204 +347,294 @@ const DailyProd = () => {
 
   if (loading) {
     return (
-      <div>
+      <Box>
         <Navbar user={user} />
-        <div className="loading">Loading...</div>
-      </div>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="calc(100vh - 64px)">
+          <Typography variant="h6">Loading...</Typography>
+        </Box>
+      </Box>
     );
   }
 
   const dates = getDatesForMonth();
   const grandTotals = calculateGrandTotals();
   const isDeveloper = user?.role === 'developer';
+  const chartData = dailyProds.map(user => ({
+    name: user.userName,
+    'Auto Mapping': user.totals.autoMap,
+    'Manual Mapping': user.totals.manualMap,
+    'Overall Total': user.totals.overallTotal
+  }));
+
+  // Helper function to determine cell colors and styles
+  const getStatusColor = (entry) => {
+    if (!entry || !entry.mapping_type) {
+      return {};
+    }
+
+    const colors = {
+      auto: { bgcolor: '#86efac', color: '#166534' },
+      manual: { bgcolor: '#fb923c', color: '#ffffff' },
+      hybrid: { bgcolor: '#fde68a', color: '#78350f' },
+      Exempted: { bgcolor: '#fef08a', color: '#854d0e' },
+      'Day Off': { bgcolor: '#bfdbfe', color: '#1e40af' },
+      Offset: { bgcolor: '#fecaca', color: '#991b1b' },
+      'Sick Leave': { bgcolor: '#fecaca', color: '#991b1b' },
+      'On Leave': { bgcolor: '#fecaca', color: '#991b1b' },
+      'Offset + Entry': { bgcolor: '#fef08a', color: '#854d0e' }
+    };
+
+    if (entry.status && colors[entry.status]) {
+      return colors[entry.status];
+    }
+
+    if (entry.mapping_type && colors[entry.mapping_type]) {
+      return colors[entry.mapping_type];
+    }
+
+    return {};
+  };
 
   return (
-    <div>
+    <Box>
       <Navbar user={user} />
-      <div className="daily-prod-container">
-        <h1>Daily Mapping Productivity</h1>
+      <Box sx={{ p: 3, bgcolor: '#f5f5f5', minHeight: 'calc(100vh - 64px)' }}>
+        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+            <Box>
+              <Typography variant="h5" component="h1" gutterBottom>
+                Daily Mapping Productivity
+              </Typography>
+              {isDeveloper && (
+                <Typography variant="caption" color="text.secondary">
+                  Debug: Users: {allUsers.length} | Rows: {dailyProds.length}
+                </Typography>
+              )}
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <Tooltip title="Standard View">
+                <IconButton 
+                  color={viewMode === 'Standard' ? 'primary' : 'default'}
+                  onClick={() => setViewMode('Standard')}
+                >
+                  <CalendarViewMonthIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Detailed View">
+                <IconButton 
+                  color={viewMode === 'Detailed' ? 'primary' : 'default'}
+                  onClick={() => setViewMode('Detailed')}
+                >
+                  <TableViewIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Chart View">
+                <IconButton 
+                  color={viewMode === 'Chart' ? 'primary' : 'default'}
+                  onClick={() => setViewMode('Chart')}
+                >
+                  <EqualizerIcon />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          </Stack>
 
-        <div style={{ marginBottom: 8, color: '#fff' }}>
-          <strong>Debug:</strong> users={allUsers.length} rows={dailyProds.length}
-        </div>
+          <Grid container spacing={2} mb={3}>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel>Month</InputLabel>
+                <Select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  label="Month"
+                >
+                  {[
+                    'January', 'February', 'March', 'April',
+                    'May', 'June', 'July', 'August',
+                    'September', 'October', 'November', 'December'
+                  ].map(month => (
+                    <MenuItem key={month} value={month}>{month}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel>Year</InputLabel>
+                <Select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  label="Year"
+                >
+                  {['2024', '2025', '2026'].map(year => (
+                    <MenuItem key={year} value={year}>{year}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 1 }}>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <Chip size="small" label="Auto" sx={{ bgcolor: '#86efac', color: '#166534' }} />
+                  <Chip size="small" label="Manual" sx={{ bgcolor: '#fb923c', color: '#fff' }} />
+                  <Chip size="small" label="Hybrid" sx={{ bgcolor: '#fde68a', color: '#78350f' }} />
+                  <Chip size="small" label="Exempted" sx={{ bgcolor: '#fef08a', color: '#854d0e' }} />
+                  <Chip size="small" label="Day Off" sx={{ bgcolor: '#bfdbfe', color: '#1e40af' }} />
+                  <Chip size="small" label="Offset/Leave" sx={{ bgcolor: '#fecaca', color: '#991b1b' }} />
+                </Stack>
+              </Paper>
+            </Grid>
+          </Grid>
 
-        <div className="controls-row">
-          <div className="left-controls">
-            <div className="control-group">
-              <label>Month:</label>
-              <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
-                <option value="January">January</option>
-                <option value="February">February</option>
-                <option value="March">March</option>
-                <option value="April">April</option>
-                <option value="May">May</option>
-                <option value="June">June</option>
-                <option value="July">July</option>
-                <option value="August">August</option>
-                <option value="September">September</option>
-                <option value="October">October</option>
-                <option value="November">November</option>
-                <option value="December">December</option>
-              </select>
-            </div>
+          {viewMode === 'Chart' && (
+            <Box sx={{ height: 400, mt: 3 }}>
+              <ResponsiveContainer>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <RechartsTooltip />
+                  <Legend />
+                  <Bar dataKey="Auto Mapping" fill="#86efac" />
+                  <Bar dataKey="Manual Mapping" fill="#fb923c" />
+                  <Bar dataKey="Overall Total" fill="#7c3aed" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Box>
+          )}
 
-            <div className="control-group">
-              <label>Year:</label>
-              <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-                <option value="2026">2026</option>
-              </select>
-            </div>
-          </div>
+          {viewMode === 'Detailed' && (
+            <Box sx={{ height: 600, mt: 3 }}>
+              <DataGrid
+                rows={dailyProds.map((user, index) => ({
+                  id: index,
+                  userName: user.userName,
+                  ...user.totals
+                }))}
+                columns={[
+                  { field: 'userName', headerName: 'PIC', width: 180 },
+                  { field: 'accepted', headerName: 'ACCEPTED', width: 130, type: 'number' },
+                  { field: 'dismissed', headerName: 'DISMISSED', width: 130, type: 'number' },
+                  { field: 'autoMap', headerName: 'AUTO MAP', width: 130, type: 'number' },
+                  { field: 'duplicates', headerName: 'DUPLICATES', width: 130, type: 'number' },
+                  { field: 'manualMap', headerName: 'MANUAL MAP', width: 130, type: 'number' },
+                  { field: 'cannotBeMapped', headerName: 'CANNOT BE MAPPED', width: 170, type: 'number' },
+                  { field: 'createdProperty', headerName: 'CREATED PROPERTY', width: 170, type: 'number' },
+                  { field: 'overallTotal', headerName: 'OVERALL TOTAL', width: 150, type: 'number' }
+                ]}
+                components={{ Toolbar: GridToolbar }}
+                pageSize={10}
+                rowsPerPageOptions={[10, 25, 50]}
+                disableSelectionOnClick
+                sx={{
+                  '& .MuiDataGrid-root': {
+                    backgroundColor: '#fff',
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: '#7c3aed',
+                    color: '#000',
+                  },
+                  '& .MuiDataGrid-cell': {
+                    color: '#000'
+                  }
+                }}
+              />
+            </Box>
+          )}
 
-          <div className="right-controls">
-            <div className="control-group">
-              <label>Option:</label>
-              <select value={viewMode} onChange={(e) => setViewMode(e.target.value)}>
-                <option value="Detailed">Detailed</option>
-                <option value="Standard">Standard</option>
-              </select>
-            </div>
-
-            <div className="legend">
-              <div className="legend-item">
-                <span className="legend-box auto-mapping"></span>
-                <span>Auto</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-box manual-mapping"></span>
-                <span>Manual</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-box hybrid-mapping"></span>
-                <span>Hybrid</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-box exempted"></span>
-                <span>Exempted</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-box day-off"></span>
-                <span>Day Off</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-box offset"></span>
-                <span>Offset/Leave</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-box offset-entry"></span>
-                <span>Offset + Entry</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="table-wrapper">
-          <table className="daily-prod-table">
-            <thead>
-              <tr>
-                <th className="pic-header">PIC</th>
-                {viewMode === 'Detailed' ? (
-                  <>
-                    <th className="total-header">ACCEPTED</th>
-                    <th className="total-header">DISMISSED</th>
-                    <th className="total-header">AUTO<br/>MAP</th>
-                    <th className="total-header">DUPLICATES</th>
-                    <th className="total-header">MANUAL<br/>MAP</th>
-                    <th className="total-header">CANNOT<br/>BE<br/>MAPPED</th>
-                    <th className="total-header">CREATED<br/>PROPERTY</th>
-                  </>
-                ) : (
-                  <>
+          {viewMode === 'Standard' && (
+            <TableContainer component={Paper} sx={{ mt: 3, maxHeight: 'calc(100vh - 300px)' }}>
+              <Table stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <StyledTableCell className="header pic">PIC</StyledTableCell>
                     {dates.map((date, idx) => (
-                      <th key={idx} className="date-header">{formatDateHeader(date)}</th>
+                      <StyledTableCell key={idx} className="header" align="center">
+                        {formatDateHeader(date)}
+                      </StyledTableCell>
                     ))}
-                  </>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {dailyProds.map((userData, userIdx) => (
-                <tr key={userIdx}>
-                  <td className="pic-cell">{userData.userName}</td>
-                  
-                  {viewMode === 'Detailed' ? (
-                    <>
-                      <td className="total-cell">{userData.totals.accepted}</td>
-                      <td className="total-cell">{userData.totals.dismissed}</td>
-                      <td className="total-cell">{userData.totals.autoMap}</td>
-                      <td className="total-cell">{userData.totals.duplicates}</td>
-                      <td className="total-cell">{userData.totals.manualMap}</td>
-                      <td className="total-cell">{userData.totals.cannotBeMapped}</td>
-                      <td className="total-cell">{userData.totals.createdProperty}</td>
-                    </>
-                  ) : (
-                    <>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {dailyProds.map((userData, userIdx) => (
+                    <TableRow key={userIdx}>
+                      <StyledTableCell className="pic">{userData.userName}</StyledTableCell>
                       {dates.map((date, dateIdx) => {
                         const entry = getCellData(userData.userId, date);
                         const cellValue = getCellValue(entry);
                         const isEditing = editingCell?.userId === userData.userId && 
                                         editingCell?.date === date.toISOString();
+                        const { bgcolor, color } = getStatusColor(entry);
                         
                         return (
-                          <td 
-                            key={dateIdx} 
-                            className={`daily-cell ${getCellColor(entry)} ${isDeveloper ? 'editable' : ''}`}
-                            onClick={() => handleCellClick(userData.userId, date)}
+                          <StyledTableCell 
+                            key={dateIdx}
+                            align="center"
+                            bgcolor={bgcolor}
+                            color={color}
+                            onClick={() => isDeveloper && handleCellClick(userData.userId, date)}
+                            sx={{ cursor: isDeveloper ? 'pointer' : 'default' }}
                           >
                             {isEditing ? (
-                              <input
-                                type="text"
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onBlur={handleCellBlur}
-                                onKeyDown={handleKeyPress}
-                                autoFocus
-                                className="cell-input"
-                              />
+                              <Box>
+                                <TextField
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  onBlur={handleCellBlur}
+                                  onKeyDown={handleKeyPress}
+                                  size="small"
+                                  autoFocus
+                                  sx={{ width: 60 }}
+                                />
+                                {isDeveloper && (
+                                  <FormControl size="small" sx={{ ml: 1, minWidth: 120 }}>
+                                    <Select
+                                      value=""
+                                      onChange={(e) => handleStatusSelect(e.target.value)}
+                                      displayEmpty
+                                      size="small"
+                                    >
+                                      <MenuItem value="" disabled>
+                                        <em>Status</em>
+                                      </MenuItem>
+                                      {statusOptions.map((status) => (
+                                        <MenuItem key={status} value={status}>
+                                          {status}
+                                        </MenuItem>
+                                      ))}
+                                    </Select>
+                                  </FormControl>
+                                )}
+                              </Box>
                             ) : (
                               cellValue
                             )}
-                          </td>
+                          </StyledTableCell>
                         );
                       })}
-                    </>
-                  )}
-                </tr>
-              ))}
-
-              <tr className="grand-total-row">
-                <td className="pic-cell"><strong>GRAND<br/>TOTAL</strong></td>
-                
-                {viewMode === 'Detailed' ? (
-                  <>
-                    <td className="total-cell"><strong>{grandTotals.accepted}</strong></td>
-                    <td className="total-cell"><strong>{grandTotals.dismissed}</strong></td>
-                    <td className="total-cell"><strong>{grandTotals.autoMap}</strong></td>
-                    <td className="total-cell"><strong>{grandTotals.duplicates}</strong></td>
-                    <td className="total-cell"><strong>{grandTotals.manualMap}</strong></td>
-                    <td className="total-cell"><strong>{grandTotals.cannotBeMapped}</strong></td>
-                    <td className="total-cell"><strong>{grandTotals.createdProperty}</strong></td>
-                  </>
-                ) : (
-                  <>
-                    {dates.map((date, dateIdx) => {
-                      const dailyTotal = calculateDailyTotal(date);
-                      return (
-                        <td key={dateIdx} className="daily-total-cell">
-                          <strong>{dailyTotal || ''}</strong>
-                        </td>
-                      );
-                    })}
-                  </>
-                )}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+                    </TableRow>
+                  ))}
+                  <TableRow>
+                    <StyledTableCell className="total">
+                      GRAND TOTAL
+                    </StyledTableCell>
+                    {dates.map((date, dateIdx) => (
+                      <StyledTableCell 
+                        key={dateIdx}
+                        align="center"
+                        className="total"
+                      >
+                        {calculateDailyTotal(date)}
+                      </StyledTableCell>
+                    ))}
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Paper>
+      </Box>
+    </Box>
   );
 };
 

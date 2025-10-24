@@ -1,8 +1,7 @@
-// src/components/Navbar.jsx
 import { Link } from 'react-router-dom';
 import './NavBar.css';
 
-export default function Navbar({ user }) {
+export default function NavBar({ user }) {
   return (
     <nav className="navbar">
       <div className="app-container">
@@ -17,15 +16,24 @@ export default function Navbar({ user }) {
             {user?.role !== 'guest' && <Link to="/prod-entries">Productivity Entry</Link>}
             <Link to="/suppliers">Suppliers</Link>
             <Link to="/daily-prod">Daily Prod</Link>
-            <Link to="/summary">Summary</Link>
+            <Link to="/summary-dashboard">Summary</Link>
             {user?.role === 'developer' && (
               <Link to="/user-management">User Management</Link>
             )}
           </div>
 
           <div className="navbar-right">
-            <span>Jinjoo Lane</span>
-            <a href="/">Logout</a>
+            <span>{user?.name || 'Guest'}</span>
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                window.location.href = '/';
+              }}
+            >
+              Logout
+            </a>
           </div>
         </div>
       </div>
