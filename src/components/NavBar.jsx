@@ -17,7 +17,7 @@ export default function Navbar({ user }) {
             {user?.role !== 'guest' && <Link to="/prod-entries">Productivity Entry</Link>}
             <Link to="/suppliers">Suppliers</Link>
             <Link to="/daily-prod">Daily Prod</Link>
-            <Link to="/summary-dashboard">Summary</Link>
+            <Link to="/summary">Summary</Link>
             {user?.role === 'developer' && (
               <Link to="/user-management">User Management</Link>
             )}

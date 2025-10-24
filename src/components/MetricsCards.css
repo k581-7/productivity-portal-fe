@@ -1,0 +1,43 @@
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.metrics-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.metrics-card:hover {
+  transform: translateY(-2px);
+}
+
+.metrics-card h3 {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.metrics-card .value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin: 0.5rem 0;
+}
+
+.metrics-card p {
+  margin: 0;
+  color: #888;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
