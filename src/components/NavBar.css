@@ -7,7 +7,8 @@
 
 .navbar .app-container {
   height: 100%;
-  padding: 0 20px;
+  padding: 0 24px;
+  max-width: 100%;
 }
 
 .navbar-content {
@@ -15,6 +16,14 @@
   justify-content: space-between;
   align-items: center;
   height: 100%;
+  gap: 40px;
+  width: 100%;
+  position: relative;
+}
+
+.navbar-brand {
+  flex-shrink: 0;
+  margin-right: auto;
 }
 
 .navbar h3 {
@@ -23,11 +32,13 @@
 }
 
 .navbar-links {
-  flex: 1;
+  flex: 0;
   display: flex;
   justify-content: center;
   gap: 24px;
-  margin: 0 48px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .navbar-links a {
@@ -43,7 +54,19 @@
 
 .navbar-right {
   display: flex;
-  gap: 24px;
+  gap: 20px;
   align-items: center;
   font-size: 0.9rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.navbar-right a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.navbar-right a:hover {
+  text-decoration: underline;
 }

@@ -2,16 +2,15 @@
   padding: 30px;
   max-width: 1400px;
   margin: 0 auto;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ffffff;
   min-height: 100vh;
 }
 
 .summary-container h1 {
-  color: #ffffff;
+  color: #1f2937;
   margin-bottom: 30px;
   font-size: 32px;
   font-weight: 700;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.5px;
 }
 
@@ -34,7 +33,7 @@
 
 .control-group label {
   font-weight: 600;
-  color: #ffffff;
+  color: #1f2937;
   font-size: 15px;
 }
 
@@ -61,7 +60,7 @@
 }
 
 .chart-container {
-  background: white;
+  background: #f0fdf4;
   padding: 35px;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
@@ -73,7 +72,7 @@
 }
 
 .summary-stats {
-  background: white;
+  background: #f0fdf4;
   padding: 35px;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
@@ -149,7 +148,7 @@
   text-align: center;
   padding: 60px;
   font-size: 20px;
-  color: #ffffff;
+  color: #1f2937;
   font-weight: 600;
 }
 
