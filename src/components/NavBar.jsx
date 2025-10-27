@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import './NavBar.css';
+import logoWhite from '../assets/PP_white.png';
 
 export default function NavBar({ user }) {
   return (
@@ -7,6 +8,7 @@ export default function NavBar({ user }) {
       <div className="app-container">
         <div className="navbar-content">
           <div className="navbar-brand">
+            <img src={logoWhite} alt="PP Logo" className="navbar-logo" />
             <h3>Productivity Portal</h3>
           </div>
 

@@ -24,6 +24,14 @@
 .navbar-brand {
   flex-shrink: 0;
   margin-right: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-logo {
+  height: 28px;
+  width: auto;
 }
 
 .navbar h3 {

@@ -45,13 +45,13 @@ const StyledTableCell = styled(TableCell)(({ theme, bgcolor, color }) => ({
   padding: '12px',
   fontSize: 14,
   '&.header': {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#374151',
     color: theme.palette.common.white,
     fontWeight: 'bold',
   },
   '&.header.pic': {
-    backgroundColor: '#7c3aed',
-    color: theme.palette.common.black,
+    backgroundColor: '#374151',
+    color: theme.palette.common.white,
     fontWeight: 'bold',
   },
   '&.pic': {
@@ -95,10 +95,10 @@ const DailyProd = () => {
   }, [user]);
 
   useEffect(() => {
-    if (user && allUsers.length > 0) {
+    if (user) {
       fetchDailyProds();
     }
-  }, [selectedMonth, selectedYear, user, allUsers]);
+  }, [selectedMonth, selectedYear, user]);
 
   const fetchCurrentUser = async () => {
     try {
@@ -127,7 +127,15 @@ const DailyProd = () => {
       });
       if (!res.ok) {
         console.error('fetchAllUsers failed', res.status);
-        setAllUsers([]);
+        // For junior users, try to fetch from daily_prods endpoint to get all users
+        if (user?.role === 'junior') {
+          console.log('Junior user detected, will fetch users from daily_prods data');
+          setAllUsers([user]); // Temporary, will be populated after fetchDailyProds
+        } else if (user) {
+          setAllUsers([user]);
+        } else {
+          setAllUsers([]);
+        }
         return;
       }
       const payload = await res.json();
@@ -135,7 +143,12 @@ const DailyProd = () => {
       setAllUsers(users.filter(u => u.id));
     } catch (error) {
       console.error('Error fetching users:', error);
-      setAllUsers([]);
+      // Fallback to current user if fetch fails
+      if (user) {
+        setAllUsers([user]);
+      } else {
+        setAllUsers([]);
+      }
     }
   };
 
@@ -192,13 +205,42 @@ const DailyProd = () => {
       if (!response.ok) {
         console.error('fetchDailyProds failed', response.status);
         setDailyProds([]);
+        setLoading(false);
         return;
       }
 
       const data = await response.json();
       console.log('Raw backend response:', JSON.stringify(data, null, 2));
+      
+      // Extract unique users from the daily_prods data if allUsers is not populated
+      if (allUsers.length <= 1 && data.length > 0) {
+        const uniqueUsers = [];
+        const userIds = new Set();
+        
+        data.forEach(userData => {
+          if (!userIds.has(userData.user_id)) {
+            userIds.add(userData.user_id);
+            uniqueUsers.push({
+              id: userData.user_id,
+              name: userData.user_name || `User ${userData.user_id}`,
+              email: userData.user_email || ''
+            });
+          }
+        });
+        
+        console.log('Populated users from daily_prods:', uniqueUsers);
+        setAllUsers(uniqueUsers);
+      }
+      
       const dates = getDatesForMonth();
-      const processedData = allUsers.map(u => createEmptyUserData(u, dates));
+      const usersToProcess = allUsers.length > 1 ? allUsers : 
+        data.map(ud => ({ 
+          id: ud.user_id, 
+          name: ud.user_name || `User ${ud.user_id}`,
+          email: ud.user_email || ''
+        })).filter((u, idx, arr) => arr.findIndex(a => a.id === u.id) === idx);
+      
+      const processedData = usersToProcess.map(u => createEmptyUserData(u, dates));
 
       data.forEach(userData => {
         const userIndex = processedData.findIndex(u => u.userId === userData.user_id);
@@ -309,7 +351,8 @@ const DailyProd = () => {
   };
 
   const handleCellClick = (userId, date, event) => {
-    if (user?.role !== 'developer') return;
+    // Allow developers and leaders to edit
+    if (user?.role !== 'developer' && user?.role !== 'leader') return;
 
     event?.preventDefault?.();
     event?.stopPropagation?.();
@@ -340,16 +383,11 @@ const DailyProd = () => {
     if (!editingCell || !status) return;
     
     const cellToUpdate = { ...editingCell };
-    
-    console.log('🟢 HANDLE STATUS SELECT:', {
-      status,
-      cellToUpdate
-    });
+
     
     try {
       // Handle "Clear Status" option
       if (status === 'Clear Status') {
-        console.log('🔴 CLEARING STATUS for cellKey:', cellToUpdate.cellKey);
         
         // Parse the date from ISO string to get proper date parts
         const dateObj = new Date(cellToUpdate.date);
@@ -358,11 +396,6 @@ const DailyProd = () => {
         const day = String(dateObj.getDate()).padStart(2, '0');
         const formattedDate = `${year}-${month}-${day}`;
         
-        console.log('🔴 Sending to backend:', {
-          user_id: cellToUpdate.userId,
-          date: formattedDate,
-          original_iso: cellToUpdate.date
-        });
         
         // Immediately update UI - remove status, will show calculated totals on next fetch
         setDailyProds(prevProds => {
@@ -381,7 +414,6 @@ const DailyProd = () => {
                 });
                 
                 if (entryCellKey === cellToUpdate.cellKey) {
-                  console.log('  ✅ MATCH! Clearing status for:', entry.date.toDateString());
                   return {
                     ...entry,
                     status: null
@@ -422,8 +454,6 @@ const DailyProd = () => {
         return;
       }
       
-      // Normal status update
-      console.log('Setting status:', status, 'for cell:', cellToUpdate.cellKey);
       
       // Parse the date from ISO string to get proper date parts
       const dateObj = new Date(cellToUpdate.date);
@@ -552,6 +582,7 @@ const DailyProd = () => {
 
   const dates = getDatesForMonth();
   const isDeveloper = user?.role === 'developer';
+  const canEdit = user?.role === 'developer' || user?.role === 'leader';
   const chartData = dailyProds.map(user => ({
     name: user.userName,
     'Auto Mapping': user.totals.autoMap,
@@ -571,7 +602,6 @@ const DailyProd = () => {
               </Typography>
               {isDeveloper && (
                 <Typography variant="caption" color="text.secondary">
-                  Debug: Users: {allUsers.length} | Rows: {dailyProds.length}
                 </Typography>
               )}
             </Box>
@@ -662,7 +692,7 @@ const DailyProd = () => {
                   <Legend />
                   <Bar dataKey="Auto Mapping" fill="#86efac" />
                   <Bar dataKey="Manual Mapping" fill="#fb923c" />
-                  <Bar dataKey="Overall Total" fill="#7c3aed" />
+                  <Bar dataKey="Overall Total" fill="#374151" />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
@@ -677,7 +707,7 @@ const DailyProd = () => {
                   ...user.totals
                 }))}
                 columns={[
-                  { field: 'userName', headerName: 'PIC', width: 180 },
+                  { field: 'userName', headerName: 'Team Members', width: 180 },
                   { field: 'accepted', headerName: 'ACCEPTED', width: 130, type: 'number' },
                   { field: 'dismissed', headerName: 'DISMISSED', width: 130, type: 'number' },
                   { field: 'autoMap', headerName: 'AUTO MAP', width: 130, type: 'number' },
@@ -692,16 +722,16 @@ const DailyProd = () => {
                 rowsPerPageOptions={[10, 25, 50]}
                 disableSelectionOnClick
                 sx={{
-                  '& .MuiDataGrid-root': {
-                    backgroundColor: '#fff',
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: '#7c3aed',
-                    color: '#000',
-                  },
-                  '& .MuiDataGrid-cell': {
-                    color: '#000'
-                  }
+                    '& .MuiDataGrid-root': {
+                      backgroundColor: '#fff',
+                    },
+                    '& .MuiDataGrid-columnHeaders': {
+                      backgroundColor: '#374151',
+                      color: '#000',
+                    },
+                    '& .MuiDataGrid-cell': {
+                      color: '#000'
+                    }
                 }}
               />
             </Box>
@@ -733,7 +763,7 @@ const DailyProd = () => {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <StyledTableCell className="header pic">PIC</StyledTableCell>
+                    <StyledTableCell className="header pic">Team Members</StyledTableCell>
                     {dates.map((date, idx) => (
                       <StyledTableCell key={idx} className="header" align="center">
                         {formatDateHeader(date)}
@@ -758,8 +788,8 @@ const DailyProd = () => {
                             align="center"
                             bgcolor={bgcolor}
                             color={color}
-                            onClick={(e) => isDeveloper && handleCellClick(userData.userId, date, e)}
-                            sx={{ cursor: isDeveloper ? 'pointer' : 'default' }}
+                            onClick={(e) => canEdit && handleCellClick(userData.userId, date, e)}
+                            sx={{ cursor: canEdit ? 'pointer' : 'default' }}
                           >
                             {isEditing ? (
                               <Box 
@@ -783,7 +813,7 @@ const DailyProd = () => {
                                     onClick={(e) => e.stopPropagation()}
                                   />
                                 )}
-                                {isDeveloper && (
+                                {canEdit && (
                                   <FormControl 
                                     size="small" 
                                     sx={{ minWidth: 120 }}

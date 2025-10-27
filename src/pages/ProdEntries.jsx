@@ -85,17 +85,28 @@ export default function ProdEntries() {
           const juniorRes = await fetch('http://localhost:3000/api/v1/users?role=junior', {
             headers: { Authorization: `Bearer ${token}` }
           });
-          
           if (juniorRes.ok) {
             const juniorData = await juniorRes.json();
+            let juniors = [];
             if (Array.isArray(juniorData)) {
-              setJuniorUsers(juniorData);
+              juniors = juniorData;
+            } else if (Array.isArray(juniorData.users)) {
+              juniors = juniorData.users;
+            } else if (Array.isArray(juniorData.data)) {
+              juniors = juniorData.data;
             }
+            setJuniorUsers(juniors);
+            console.log('Junior users set:', juniors.length, 'users');
+          } else {
+            console.error('Failed to fetch junior users, status:', juniorRes.status);
+            setJuniorUsers([]);
           }
         } catch (juniorErr) {
           console.error('Error fetching junior users:', juniorErr);
           setJuniorUsers([]);
         }
+      } else {
+        console.log('User is not leader/developer, role:', userData.role);
       }
       
       setLoading(false);
@@ -131,8 +142,6 @@ export default function ProdEntries() {
         }
       };
 
-      console.log('Submitting payload:', payload); // For debugging
-
       const res = await fetch('http://localhost:3000/api/v1/prod_entries', {
         method: 'POST',
         headers: {
@@ -144,7 +153,6 @@ export default function ProdEntries() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        console.error('Error response:', errorData); // For debugging
         throw new Error(errorData.error || 'Failed to create prod entry');
       }
 
@@ -251,8 +259,6 @@ export default function ProdEntries() {
       <Navbar user={user} />
       
       <div className="prod-entries-container">
-        <h1>Productivity Entry</h1>
-        
         {notification.show && (
           <div className={`notification ${notification.type}`}>
             {notification.message}
@@ -260,6 +266,7 @@ export default function ProdEntries() {
         )}
 
         <form onSubmit={handleSubmit} className="prod-entry-form">
+          <h1>Productivity Entry</h1>
           {/* User Selection - Show for both leader and developer */}
           {canAssignToOthers && (
             <div className="form-group">
@@ -273,14 +280,22 @@ export default function ProdEntries() {
                 onChange={handleInputChange}
                 required
               >
-                <option value={user.id}>Myself ({user.email})</option>
-                {/* Remove the optgroup wrapper */}
-                {juniorUsers.length > 0 && juniorUsers.map(junior => (
-                  <option key={junior.id} value={junior.id}>
-                    {junior.name || junior.email}
-                  </option>
-                ))}
+                  <option value={user.id}>Me ({user.email})</option>
+                  {/* Show junior users except current user */}
+                  {juniorUsers.length > 0 ? (
+                    juniorUsers
+                      .filter(junior => junior.id !== user.id)
+                      .map(junior => (
+                        <option key={junior.id} value={junior.id}>
+                          {junior.name || junior.email}
+                        </option>
+                      ))
+                  ) : (
+                    <option disabled>No junior users found</option>
+                  )}
               </select>
+              <small style={{ color: '#666', fontSize: '12px' }}>
+              </small>
             </div>
           )}
 
@@ -296,16 +311,16 @@ export default function ProdEntries() {
               onChange={handleInputChange}
               required
             >
-              <option value="">-- Select Supplier --</option>
-              {suppliers.length === 0 ? (
-                <option disabled>No suppliers available</option>
-              ) : (
-                suppliers.map(supplier => (
-                  <option key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </option>
-                ))
-              )}
+                  <option value="" disabled hidden>-- Select Supplier --</option>
+                  {suppliers.length === 0 ? (
+                    <option disabled>No suppliers available</option>
+                  ) : (
+                    suppliers.map(supplier => (
+                      <option key={supplier.id} value={supplier.id}>
+                        {supplier.name}
+                      </option>
+                    ))
+                  )}
             </select>
           </div>
 

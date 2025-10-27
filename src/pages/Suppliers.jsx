@@ -120,19 +120,20 @@ export default function Suppliers() {
       <Navbar user={user} />
 
       <div className="suppliers-container">
-        <div className="suppliers-header">
-          <h1>Suppliers</h1>
-          {canManageSuppliers && (
-            <button
-              className="btn-create"
-              onClick={() => navigate('/suppliers/create')}
-            >
-              + Create New Supplier
-            </button>
-          )}
-        </div>
+        <div className="suppliers-content">
+          <div className="suppliers-header">
+            <h1>Suppliers</h1>
+            {canManageSuppliers && (
+              <button
+                className="btn-create"
+                onClick={() => navigate('/suppliers/create')}
+              >
+                + Create New Supplier
+              </button>
+            )}
+          </div>
 
-        {suppliers.length === 0 ? (
+          {suppliers.length === 0 ? (
           <div className="empty-state">
             <p>No suppliers found.</p>
             {canManageSuppliers && (
@@ -189,6 +190,7 @@ export default function Suppliers() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

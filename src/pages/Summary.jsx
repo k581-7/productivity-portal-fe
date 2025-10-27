@@ -166,55 +166,57 @@ const Summary = ({ user }) => {
         />
       )}
       <div className="summary-container">
-        <h1>Summary Dashboard</h1>
-        
-        <div className="date-filter">
-          <input
-            type="date"
-            value={dateRange.start}
-            onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-          />
-          <span>to</span>
-          <input
-            type="date"
-            value={dateRange.end}
-            onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-          />
-        </div>
+        <div className="summary-content">
+          <h1>Summary Dashboard</h1>
+          
+          <div className="date-filter">
+            <input
+              type="date"
+              value={dateRange.start}
+              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+            />
+            <span>to</span>
+            <input
+              type="date"
+              value={dateRange.end}
+              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+            />
+          </div>
 
-        <div className="charts-grid">
-          {renderOverallMetricsPie()}
-          {renderDailyTrendsChart()}
-          {renderUserMetricsChart()}
-        </div>
+          <div className="charts-grid">
+            {renderOverallMetricsPie()}
+            {renderDailyTrendsChart()}
+            {renderUserMetricsChart()}
+          </div>
 
-        {summaryData?.overall_metrics && (
-          <div className="summary-stats">
-            <h2>Summary Statistics</h2>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <h3>Total Entries</h3>
-                <p className="stat-value">{summaryData.overall_metrics.total_entries}</p>
-              </div>
-              <div className="stat-card">
-                <h3>Auto Mapping</h3>
-                <p className="stat-value">{summaryData.overall_metrics.auto_mapping.total}</p>
-              </div>
-              <div className="stat-card">
-                <h3>Manual Mapping</h3>
-                <p className="stat-value">{summaryData.overall_metrics.manual_mapping.total}</p>
-              </div>
-              <div className="stat-card">
-                <h3>Duplicates</h3>
-                <p className="stat-value">{summaryData.overall_metrics.duplicates}</p>
-              </div>
-              <div className="stat-card">
-                <h3>Productivity Rate</h3>
-                <p className="stat-value">{summaryData.overall_metrics.productivity_rate}/day</p>
+          {summaryData?.overall_metrics && (
+            <div className="summary-stats">
+              <h2>Summary Statistics</h2>
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <h3>Total Entries</h3>
+                  <p className="stat-value">{summaryData.overall_metrics.total_entries}</p>
+                </div>
+                <div className="stat-card">
+                  <h3>Auto Mapping</h3>
+                  <p className="stat-value">{summaryData.overall_metrics.auto_mapping.total}</p>
+                </div>
+                <div className="stat-card">
+                  <h3>Manual Mapping</h3>
+                  <p className="stat-value">{summaryData.overall_metrics.manual_mapping.total}</p>
+                </div>
+                <div className="stat-card">
+                  <h3>Duplicates</h3>
+                  <p className="stat-value">{summaryData.overall_metrics.duplicates}</p>
+                </div>
+                <div className="stat-card">
+                  <h3>Productivity Rate</h3>
+                  <p className="stat-value">{summaryData.overall_metrics.productivity_rate}/day</p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import NavBar from '../components/NavBar';
 import './UserManagement.css';
@@ -5,6 +6,8 @@ import './UserManagement.css';
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [roleValue, setRoleValue] = useState('');
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -12,35 +15,34 @@ export default function UserManagement() {
       console.warn('No token found');
       return;
     }
-
-    // Fetch current user
     fetch('http://localhost:3000/api/v1/current_user', {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
       .then(data => setCurrentUser(data))
       .catch(err => console.error('Error fetching current user:', err));
 
-    // Fetch all users
     fetch('http://localhost:3000/api/v1/users', {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => {
         if (!res.ok) throw new Error('Forbidden');
         return res.json();
       })
       .then(data => {
-        console.log('Fetched users:', data);
-        setUsers(data);
+        setUsers(Array.isArray(data) ? data : (data.users || data.data || []));
       })
       .catch(err => {
         console.error('Access denied or error fetching users:', err);
       });
   }, [token]);
+
+  const roles = [
+    { value: 'guest', label: 'Guest' },
+    { value: 'junior', label: 'Junior' },
+    { value: 'leader', label: 'Leader' },
+    { value: 'developer', label: 'Developer' }
+  ];
 
   const updateRole = (id, role) => {
     fetch(`http://localhost:3000/api/v1/users/${id}`, {
@@ -53,63 +55,90 @@ export default function UserManagement() {
     })
       .then(res => res.json())
       .then(data => {
-        console.log('Updated:', data);
-        setUsers(prev =>
-          prev.map(u => (u.id === id ? { ...u, role: data.user.role } : u))
-        );
+        setUsers(prev => prev.map(u => (u.id === id ? { ...u, role: data.user.role } : u)));
+        setEditingId(null);
       });
   };
-
-  const roles = [
-    { value: 'guest', label: 'Guest' },
-    { value: 'junior', label: 'Junior' },
-    { value: 'leader', label: 'Leader' },
-    { value: 'developer', label: 'Developer' }
-  ];
 
   return (
     <div>
       <NavBar user={currentUser} />
-      
       <div className="user-management-container">
-        <h1>User Management</h1>
-
-        <div className="user-management-form">
+        <div className="user-management-table">
+          <h1 className="user-management-table-title">User Management</h1>
           {users.length === 0 ? (
             <div className="no-users">
               <p>No users found or access denied.</p>
             </div>
           ) : (
-            <form>
-              {users.map(user => (
-                <div key={user.id} className="user-role-group">
-                  <label className="user-name-label">
-                    {user.name || user.email}
-                  </label>
-                  
-                  <div className="role-options">
-                    {roles.map(role => (
-                      <label
-                        key={role.value}
-                        className="role-radio-label"
-                      >
-                        <input
-                          type="radio"
-                          name={`role-${user.id}`}
-                          value={role.value}
-                          checked={user.role === role.value}
-                          onChange={(e) => updateRole(user.id, e.target.value)}
-                          className="role-radio-input"
-                        />
-                        <span className={user.role === role.value ? 'selected' : ''}>
-                          {role.label}
+            <table className="users-table">
+              <thead>
+                <tr>
+                  <th>User Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(user => (
+                  <tr key={user.id}>
+                    <td>{user.name || user.email}</td>
+                    <td>{user.email}</td>
+                    <td>
+                      {editingId === user.id ? (
+                        <select
+                          value={roleValue || user.role}
+                          onChange={e => setRoleValue(e.target.value)}
+                          onBlur={() => {
+                            if (roleValue && roleValue !== user.role) updateRole(user.id, roleValue);
+                            setEditingId(null);
+                          }}
+                          autoFocus
+                        >
+                          {roles.map(role => (
+                            <option key={role.value} value={role.value}>{role.label}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span
+                          className="role-cell"
+                          style={{ cursor: 'pointer', color: '#2563eb', fontWeight: 600 }}
+                          onClick={() => {
+                            setEditingId(user.id);
+                            setRoleValue(user.role);
+                          }}
+                        >
+                          {roles.find(r => r.value === user.role)?.label || user.role}
                         </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </form>
+                      )}
+                    </td>
+                    <td>
+                      <button
+                        className="change-role-btn"
+                        style={{
+                          background: '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '5px',
+                          padding: '8px 18px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          fontSize: '15px',
+                          transition: 'background 0.2s'
+                        }}
+                        onClick={() => {
+                          setEditingId(user.id);
+                          setRoleValue(user.role);
+                        }}
+                      >
+                        Change Role
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

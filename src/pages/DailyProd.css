@@ -120,14 +120,18 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #7c3aed;
+  background: #374151;
+}
+
+.daily-prod-table thead th {
+  color: #000 !important;
 }
 
 .daily-prod-table th {
   padding: 10px 8px;
   text-align: center;
   font-weight: 700;
-  color: #ffffff;
+  color: #000 !important;
   border: 1px solid #ffffff;
   font-size: 11px;
   text-transform: uppercase;
@@ -138,17 +142,17 @@
 
 .pic-header {
   min-width: 100px;
-  background: #7c3aed !important;
+  background: #374151 !important;
 }
 
 .total-header {
   min-width: 70px;
-  background: #7c3aed !important;
+  background: #374151 !important;
 }
 
 .date-header {
   min-width: 85px;
-  background: #7c3aed !important;
+  background: #374151 !important;
 }
 
 .daily-prod-table td {
