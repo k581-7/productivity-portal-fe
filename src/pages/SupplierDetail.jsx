@@ -13,6 +13,7 @@ export default function SupplierDetail() {
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (!token) {
@@ -28,7 +29,7 @@ export default function SupplierDetail() {
       setLoading(true);
 
       // Fetch current user
-      const userRes = await fetch('http://localhost:3000/api/v1/current_user', {
+  const userRes = await fetch(`${apiUrl}/api/v1/current_user`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -37,7 +38,7 @@ export default function SupplierDetail() {
       setUser(userData);
 
       // Fetch supplier details
-      const supplierRes = await fetch(`http://localhost:3000/api/v1/suppliers/${id}`, {
+  const supplierRes = await fetch(`${apiUrl}/api/v1/suppliers/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -66,7 +67,7 @@ export default function SupplierDetail() {
     e.preventDefault();
 
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/suppliers/${id}`, {
+  const res = await fetch(`${apiUrl}/api/v1/suppliers/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

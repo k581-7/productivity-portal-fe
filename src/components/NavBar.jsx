@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import './NavBar.css';
 import logoWhite from '../assets/PP_white.png';
+import { useUser } from '../App';
 
-export default function NavBar({ user }) {
+export default function NavBar() {
+  const user = useUser();
   return (
     <nav className="navbar">
       <div className="app-container">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+const apiUrl = import.meta.env.VITE_API_URL;
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -16,7 +17,6 @@ import {
 } from 'recharts';
 import NavBar from '../components/NavBar';
 import LoadingSpinner from '../components/LoadingSpinner';
-import Notification from '../components/Notification';
 import './Summary.css';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -24,7 +24,6 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 const Summary = ({ user }) => {
   const [summaryData, setSummaryData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [notification, setNotification] = useState(null);
   const [dateRange, setDateRange] = useState({
     start: new Date().toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
@@ -45,9 +44,8 @@ const Summary = ({ user }) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      console.log('Token available:', !!token);
       const response = await fetch(
-        `http://localhost:3000/api/v1/summary/dashboard?start_date=${dateRange.start}&end_date=${dateRange.end}`,
+        `${apiUrl}/api/v1/summary/dashboard?start_date=${dateRange.start}&end_date=${dateRange.end}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -58,13 +56,9 @@ const Summary = ({ user }) => {
       if (!response.ok) throw new Error('Failed to fetch summary data');
       
       const data = await response.json();
-      console.log('Summary data:', data);
       setSummaryData(data);
     } catch (error) {
-      setNotification({
-        message: 'Error fetching summary data: ' + error.message,
-        type: 'error'
-      });
+      // Optionally handle error (e.g., log or set another error state)
     } finally {
       setLoading(false);
     }
@@ -94,12 +88,13 @@ const Summary = ({ user }) => {
 
   const renderUserMetricsChart = () => {
     if (!summaryData?.user_metrics) return null;
-
+    // Filter out guest users from user_metrics
+    const filteredMetrics = summaryData.user_metrics.filter(u => u.role !== 'guest');
     return (
       <div className="chart-container">
         <h2>User Performance</h2>
         <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={summaryData.user_metrics} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <BarChart data={filteredMetrics} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
@@ -158,13 +153,7 @@ const Summary = ({ user }) => {
   return (
     <div>
       <NavBar user={user} />
-      {notification && (
-        <Notification
-          message={notification.message}
-          type={notification.type}
-          onClose={() => setNotification(null)}
-        />
-      )}
+      {/* Notification removed */}
       <div className="summary-container">
         <div className="summary-content">
           <h1>Summary Dashboard</h1>
@@ -188,6 +177,7 @@ const Summary = ({ user }) => {
             {renderDailyTrendsChart()}
             {renderUserMetricsChart()}
           </div>
+
 
           {summaryData?.overall_metrics && (
             <div className="summary-stats">

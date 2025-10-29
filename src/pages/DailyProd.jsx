@@ -21,7 +21,7 @@ import {
   TableHead,
   TableRow
 } from '@mui/material';
-import { DataGrid, GridToolbar } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import {
   BarChart,
   Bar,
@@ -79,6 +79,7 @@ const DailyProd = () => {
   const [editValue, setEditValue] = useState('');
 
   const token = localStorage.getItem('token');
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (!token) {
@@ -102,7 +103,7 @@ const DailyProd = () => {
 
   const fetchCurrentUser = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/v1/current_user', {
+  const res = await fetch(`${apiUrl}/api/v1/current_user`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) {
@@ -122,7 +123,7 @@ const DailyProd = () => {
 
   const fetchAllUsers = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/v1/users', {
+  const res = await fetch(`${apiUrl}/api/v1/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) {
@@ -140,7 +141,7 @@ const DailyProd = () => {
       }
       const payload = await res.json();
       const users = Array.isArray(payload) ? payload : (payload.users || payload.data || []);
-      setAllUsers(users.filter(u => u.id));
+      setAllUsers(users.filter(u => u.id && u.role !== 'guest'));
     } catch (error) {
       console.error('Error fetching users:', error);
       // Fallback to current user if fetch fails
@@ -198,7 +199,7 @@ const DailyProd = () => {
   const fetchDailyProds = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/v1/daily_prods?month=${selectedMonth}&year=${selectedYear}`, {
+  const response = await fetch(`${apiUrl}/api/v1/daily_prods?month=${selectedMonth}&year=${selectedYear}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -431,7 +432,7 @@ const DailyProd = () => {
         setEditValue('');
         
         // Send DELETE request to backend with properly formatted date
-        const response = await fetch(`http://localhost:3000/api/v1/daily_prods/delete_status`, {
+  const response = await fetch(`${apiUrl}/api/v1/daily_prods/delete_status`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -488,7 +489,7 @@ const DailyProd = () => {
       setEditValue('');
       
       // Then send to backend with properly formatted date
-      const response = await fetch(`http://localhost:3000/api/v1/daily_prods/update_cell`, {
+  const response = await fetch(`${apiUrl}/api/v1/daily_prods/update_cell`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

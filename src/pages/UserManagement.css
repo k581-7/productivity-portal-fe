@@ -1,3 +1,117 @@
+.confirm-yes-btn {
+  background: #388e3c;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 28px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+.confirm-yes-btn:hover {
+  background: #256d1b;
+}
+.confirm-no-btn {
+  background: #fff;
+  color: #388e3c;
+  border: 2px solid #388e3c;
+  border-radius: 5px;
+  padding: 8px 28px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s, color 0.2s;
+}
+.confirm-no-btn:hover {
+  background: #e8f5e9;
+  color: #256d1b;
+}
+.users-table td span[style*="color: #e53935"] {
+  opacity: 0.85;
+}
+.users-table td span[style*="color: #388e3c"] {
+  opacity: 0.85;
+}
+.update-user-btn:disabled {
+  background: #bdbdbd;
+  color: #fff;
+  cursor: not-allowed;
+}
+.update-user-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.2s;
+}
+
+.update-user-btn:hover {
+  background: #388e3c;
+}
+
+.user-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.18);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-dialog {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  padding: 32px 28px 24px 28px;
+  min-width: 320px;
+  max-width: 90vw;
+  position: relative;
+  z-index: 1001;
+}
+
+.user-dialog h2 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+}
+
+.dialog-action-btn {
+  border: none;
+  border-radius: 5px;
+  padding: 8px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 15px;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+.user-management-title {
+  color: #333;
+  position: absolute;
+  top: -30px;
+  left: 20px;
+  background: white;
+  padding: 0 15px;
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  z-index: 2;
+}
+
+/* The following styles are being removed as they are unused */
 .user-management-container {
   max-width: 1000px;
   margin: 0 auto;
@@ -16,18 +130,6 @@
   padding: 30px;
 }
 
-.user-management-table-title {
-  color: #333;
-  position: absolute;
-  top: -30px;
-  left: 20px;
-  background: white;
-  padding: 0 15px;
-  margin: 0;
-  font-size: 28px;
-  font-weight: 600;
-  z-index: 2;
-}
 
 /* Column title bar for table header */
 .users-table thead tr {

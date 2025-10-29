@@ -35,27 +35,25 @@ export default function SupplierCreate() {
   });
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (!token) {
       navigate('/');
       return;
     }
-
     fetchUser();
   }, [token, navigate]);
 
   const fetchUser = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/v1/current_user', {
+      const res = await fetch(`${apiUrl}/api/v1/current_user`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
       if (!res.ok) throw new Error('Failed to fetch user');
       const userData = await res.json();
       setUser(userData);
-
       // Check if user can create suppliers
       if (userData.role !== 'leader' && userData.role !== 'developer') {
         showNotification('You do not have permission to create suppliers', 'error');
@@ -103,7 +101,7 @@ export default function SupplierCreate() {
     };
 
     try {
-      const res = await fetch('http://localhost:3000/api/v1/suppliers', {
+      const res = await fetch(`${apiUrl}/api/v1/suppliers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -111,12 +109,10 @@ export default function SupplierCreate() {
         },
         body: JSON.stringify({ supplier: submissionData })
       });
-
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || errorData.errors?.join(', ') || 'Failed to create supplier');
       }
-
       const newSupplier = await res.json();
       showNotification('Supplier created successfully!', 'success');
       setTimeout(() => navigate(`/suppliers/${newSupplier.id}`), 1500);

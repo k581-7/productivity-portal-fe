@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+const apiUrl = import.meta.env.VITE_API_URL;
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/NavBar';
 import './ProdEntries.css';
@@ -44,7 +45,7 @@ export default function ProdEntries() {
       setLoading(true);
       
       // Fetch current user
-      const userRes = await fetch('http://localhost:3000/api/v1/current_user', {
+  const userRes = await fetch(`${apiUrl}/api/v1/current_user`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -58,7 +59,7 @@ export default function ProdEntries() {
       
       // Fetch suppliers with error handling
       try {
-        const suppliersRes = await fetch('http://localhost:3000/api/v1/suppliers', {
+  const suppliersRes = await fetch(`${apiUrl}/api/v1/suppliers`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -82,7 +83,7 @@ export default function ProdEntries() {
       // Fetch junior users if user is leader or developer
       if (userData.role === 'leader' || userData.role === 'developer') {
         try {
-          const juniorRes = await fetch('http://localhost:3000/api/v1/users?role=junior', {
+          const juniorRes = await fetch(`${apiUrl}/api/v1/users?role=junior`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (juniorRes.ok) {
@@ -142,7 +143,7 @@ export default function ProdEntries() {
         }
       };
 
-      const res = await fetch('http://localhost:3000/api/v1/prod_entries', {
+  const res = await fetch(`${apiUrl}/api/v1/prod_entries`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -333,7 +334,10 @@ export default function ProdEntries() {
               name="date"
               value={formData.date}
               onChange={handleInputChange}
+              max={new Date().toISOString().split('T')[0]}
             />
+            <small style={{ color: '#e74c3c', fontSize: '12px' }}>
+            </small>
           </div>
 
           {/* Mapping Type */}

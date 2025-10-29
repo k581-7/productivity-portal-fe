@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/NavBar';
+const apiUrl = import.meta.env.VITE_API_URL;
 import './Suppliers.css';
 
 export default function Suppliers() {
@@ -8,7 +9,7 @@ export default function Suppliers() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  // const [showCreateModal, setShowCreateModal] = useState(false);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -26,7 +27,7 @@ export default function Suppliers() {
       setLoading(true);
 
       // Fetch current user
-      const userRes = await fetch('http://localhost:3000/api/v1/current_user', {
+  const userRes = await fetch(`${apiUrl}/api/v1/current_user`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -48,7 +49,7 @@ export default function Suppliers() {
 
   const fetchSuppliers = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/v1/suppliers', {
+  const res = await fetch(`${apiUrl}/api/v1/suppliers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
