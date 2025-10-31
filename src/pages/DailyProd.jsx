@@ -348,6 +348,17 @@ const DailyProd = () => {
       return entry.status;
     }
 
+    // Show correct mapping type totals
+    if (entry.mapping_type === 'auto') {
+      return entry.auto_total > 0 ? entry.auto_total : '';
+    }
+    if (entry.mapping_type === 'manual') {
+      return entry.manual_total > 0 ? entry.manual_total : '';
+    }
+    if (entry.mapping_type === 'hybrid') {
+      const sum = (entry.auto_total || 0) + (entry.manual_total || 0);
+      return sum > 0 ? sum : '';
+    }
     return entry.overall_total > 0 ? entry.overall_total : '';
   };
 

@@ -12,21 +12,10 @@ export default function ProdEntries() {
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     supplier_id: '',
-    assigned_user_id: '',
     date: new Date().toISOString().split('T')[0],
-    mapping_type: 0,
-    manually_mapped: 0,
-    incorrect_supplier_data: 0,
-    created_property: 0,
-    insufficient_info: 0,
-    accepted: 0,
-    dismissed: 0,
-    no_result: 0,
-    duplicate: 0,
-    reactivated: 0,
-    source: 0, //kept, but unused
-    remarks: ''
+    source: 'autosheet' // default source
   });
+  const [csvFile, setCsvFile] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -55,7 +44,7 @@ export default function ProdEntries() {
       
       const userData = await userRes.json();
       setUser(userData);
-      setFormData(prev => ({ ...prev, assigned_user_id: userData.id }));
+  // No longer need assigned_user_id
       
       // Fetch suppliers with error handling
       try {
@@ -80,35 +69,7 @@ export default function ProdEntries() {
         setSuppliers([]);
       }
       
-      // Fetch junior users if user is leader or developer
-      if (userData.role === 'leader' || userData.role === 'developer') {
-        try {
-          const juniorRes = await fetch(`${apiUrl}/api/v1/users?role=junior`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (juniorRes.ok) {
-            const juniorData = await juniorRes.json();
-            let juniors = [];
-            if (Array.isArray(juniorData)) {
-              juniors = juniorData;
-            } else if (Array.isArray(juniorData.users)) {
-              juniors = juniorData.users;
-            } else if (Array.isArray(juniorData.data)) {
-              juniors = juniorData.data;
-            }
-            setJuniorUsers(juniors);
-            console.log('Junior users set:', juniors.length, 'users');
-          } else {
-            console.error('Failed to fetch junior users, status:', juniorRes.status);
-            setJuniorUsers([]);
-          }
-        } catch (juniorErr) {
-          console.error('Error fetching junior users:', juniorErr);
-          setJuniorUsers([]);
-        }
-      } else {
-        console.log('User is not leader/developer, role:', userData.role);
-      }
+      // No longer need junior users
       
       setLoading(false);
     } catch (err) {
@@ -122,34 +83,37 @@ export default function ProdEntries() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'remarks' ? value : (value === '' ? '' : Number(value) || value)
+      [name]: value
     }));
+  };
+
+  const handleFileChange = (e) => {
+    setCsvFile(e.target.files[0] || null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!formData.supplier_id) {
       showNotification('Please select a supplier', 'error');
       return;
     }
-
+    if (!csvFile) {
+      showNotification('Please attach a CSV file', 'error');
+      return;
+    }
     try {
-      const payload = {
-        prod_entry: {
-          ...formData,
-          entered_by_user_id: user.id,
-          source: 0 // Always send source: 0 (API) since we removed the field
-        }
-      };
+  const formDataToSend = new FormData();
+  formDataToSend.append('supplier_id', formData.supplier_id);
+  formDataToSend.append('date', formData.date);
+  formDataToSend.append('source', formData.source);
+  formDataToSend.append('csv_file', csvFile);
 
-  const res = await fetch(`${apiUrl}/api/v1/prod_entries`, {
+      const res = await fetch(`${apiUrl}/api/v1/prod_entries`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(payload)
+        body: formDataToSend
       });
 
       if (!res.ok) {
@@ -160,6 +124,7 @@ export default function ProdEntries() {
       const data = await res.json();
       showNotification('Productivity entry created successfully!', 'success');
       resetForm();
+      setCsvFile(null);
     } catch (err) {
       console.error('Error creating prod entry:', err);
       showNotification(err.message || 'Failed to create entry. Please try again.', 'error');
@@ -169,21 +134,10 @@ export default function ProdEntries() {
   const resetForm = () => {
     setFormData({
       supplier_id: '',
-      assigned_user_id: user?.id || '',
       date: new Date().toISOString().split('T')[0],
-      mapping_type: 0,
-      manually_mapped: 0,
-      incorrect_supplier_data: 0,
-      created_property: 0,
-      insufficient_info: 0,
-      accepted: 0,
-      dismissed: 0,
-      no_result: 0,
-      duplicate: 0,
-      reactivated: 0,
-      source: 0,
-      remarks: ''
+      source: 'autosheet'
     });
+    setCsvFile(null);
   };
 
   const showNotification = (message, type) => {
@@ -253,53 +207,19 @@ export default function ProdEntries() {
     );
   }
 
-  const canAssignToOthers = user?.role === 'leader' || user?.role === 'developer';
+  // Only leader/developer can access this page, so no need for assign to user
 
   return (
     <div>
       <Navbar user={user} />
-      
       <div className="prod-entries-container">
         {notification.show && (
           <div className={`notification ${notification.type}`}>
             {notification.message}
           </div>
         )}
-
         <form onSubmit={handleSubmit} className="prod-entry-form">
           <h1>Productivity Entry</h1>
-          {/* User Selection - Show for both leader and developer */}
-          {canAssignToOthers && (
-            <div className="form-group">
-              <label htmlFor="assigned_user_id">
-                Assign to User: <span className="required">*</span>
-              </label>
-              <select
-                id="assigned_user_id"
-                name="assigned_user_id"
-                value={formData.assigned_user_id}
-                onChange={handleInputChange}
-                required
-              >
-                  <option value={user.id}>Me ({user.email})</option>
-                  {/* Show junior users except current user */}
-                  {juniorUsers.length > 0 ? (
-                    juniorUsers
-                      .filter(junior => junior.id !== user.id)
-                      .map(junior => (
-                        <option key={junior.id} value={junior.id}>
-                          {junior.name || junior.email}
-                        </option>
-                      ))
-                  ) : (
-                    <option disabled>No junior users found</option>
-                  )}
-              </select>
-              <small style={{ color: '#666', fontSize: '12px' }}>
-              </small>
-            </div>
-          )}
-
           {/* Supplier Selection */}
           <div className="form-group">
             <label htmlFor="supplier_id">
@@ -312,19 +232,18 @@ export default function ProdEntries() {
               onChange={handleInputChange}
               required
             >
-                  <option value="" disabled hidden>-- Select Supplier --</option>
-                  {suppliers.length === 0 ? (
-                    <option disabled>No suppliers available</option>
-                  ) : (
-                    suppliers.map(supplier => (
-                      <option key={supplier.id} value={supplier.id}>
-                        {supplier.name}
-                      </option>
-                    ))
-                  )}
+              <option value="" disabled hidden>-- Select Supplier --</option>
+              {suppliers.length === 0 ? (
+                <option disabled>No suppliers available</option>
+              ) : (
+                suppliers.map(supplier => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </option>
+                ))
+              )}
             </select>
           </div>
-
           {/* Date */}
           <div className="form-group">
             <label htmlFor="date">Date:</label>
@@ -336,169 +255,51 @@ export default function ProdEntries() {
               onChange={handleInputChange}
               max={new Date().toISOString().split('T')[0]}
             />
-            <small style={{ color: '#e74c3c', fontSize: '12px' }}>
-            </small>
           </div>
-
-          {/* Mapping Type */}
+          {/* Source Selection */}
           <div className="form-group">
-            <label htmlFor="mapping_type">Mapping Type:</label>
-            <select
-              id="mapping_type"
-              name="mapping_type"
-              value={formData.mapping_type}
-              onChange={handleInputChange}
-            >
-              <option value={0}>Auto</option>
-              <option value={1}>Manual</option>
-              <option value={2}>Hybrid</option>
-            </select>
-          </div>
-
-          {/* SOURCE FIELD REMOVED FROM UI - but still sent in payload with value 0 */}
-
-          {/* Numeric Fields Grid */}
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="manually_mapped">Manually Mapped:</label>
-              <input
-                type="number"
-                id="manually_mapped"
-                name="manually_mapped"
-                value={formData.manually_mapped}
-                onChange={handleInputChange}
-                min="0"
-                disabled={isFieldDisabled('manually_mapped')}
-                className={isFieldDisabled('manually_mapped') ? 'disabled-field' : ''}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="incorrect_supplier_data">Incorrect Supplier Data:</label>
-              <input
-                type="number"
-                id="incorrect_supplier_data"
-                name="incorrect_supplier_data"
-                value={formData.incorrect_supplier_data}
-                onChange={handleInputChange}
-                min="0"
-                disabled={isFieldDisabled('incorrect_supplier_data')}
-                className={isFieldDisabled('incorrect_supplier_data') ? 'disabled-field' : ''}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="created_property">Created Property:</label>
-              <input
-                type="number"
-                id="created_property"
-                name="created_property"
-                value={formData.created_property}
-                onChange={handleInputChange}
-                min="0"
-                disabled={isFieldDisabled('created_property')}
-                className={isFieldDisabled('created_property') ? 'disabled-field' : ''}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="insufficient_info">Insufficient Info:</label>
-              <input
-                type="number"
-                id="insufficient_info"
-                name="insufficient_info"
-                value={formData.insufficient_info}
-                onChange={handleInputChange}
-                min="0"
-                disabled={isFieldDisabled('insufficient_info')}
-                className={isFieldDisabled('insufficient_info') ? 'disabled-field' : ''}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="accepted">Accepted:</label>
-              <input
-                type="number"
-                id="accepted"
-                name="accepted"
-                value={formData.accepted}
-                onChange={handleInputChange}
-                min="0"
-                disabled={isFieldDisabled('accepted')}
-                className={isFieldDisabled('accepted') ? 'disabled-field' : ''}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="dismissed">Dismissed:</label>
-              <input
-                type="number"
-                id="dismissed"
-                name="dismissed"
-                value={formData.dismissed}
-                onChange={handleInputChange}
-                min="0"
-                disabled={isFieldDisabled('dismissed')}
-                className={isFieldDisabled('dismissed') ? 'disabled-field' : ''}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="no_result">No Result:</label>
-              <input
-                type="number"
-                id="no_result"
-                name="no_result"
-                value={formData.no_result}
-                onChange={handleInputChange}
-                min="0"
-                disabled={isFieldDisabled('no_result')}
-                className={isFieldDisabled('no_result') ? 'disabled-field' : ''}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="duplicate">Duplicate:</label>
-              <input
-                type="number"
-                id="duplicate"
-                name="duplicate"
-                value={formData.duplicate}
-                onChange={handleInputChange}
-                min="0"
-                disabled={isFieldDisabled('duplicate')}
-                className={isFieldDisabled('duplicate') ? 'disabled-field' : ''}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="reactivated">Reactivated:</label>
-              <input
-                type="number"
-                id="reactivated"
-                name="reactivated"
-                value={formData.reactivated}
-                onChange={handleInputChange}
-                min="0"
-                disabled={isFieldDisabled('reactivated')}
-                className={isFieldDisabled('reactivated') ? 'disabled-field' : ''}
-              />
+            <label>Source:</label>
+            <div style={{ display: 'flex', gap: '2em', marginTop: '0.5em' }}>
+              <label>
+                <input
+                  type="radio"
+                  name="source"
+                  value="autosheet"
+                  checked={formData.source === 'autosheet'}
+                  onChange={handleInputChange}
+                /> Autosheet
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="source"
+                  value="manualsheet"
+                  checked={formData.source === 'manualsheet'}
+                  onChange={handleInputChange}
+                /> Manualsheet
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="source"
+                  value="logs"
+                  checked={formData.source === 'logs'}
+                  onChange={handleInputChange}
+                /> Logs
+              </label>
             </div>
           </div>
-
-          {/* Remarks */}
+          {/* CSV File Attachment */}
           <div className="form-group">
-            <label htmlFor="remarks">Remarks:</label>
-            <textarea
-              id="remarks"
-              name="remarks"
-              value={formData.remarks}
-              onChange={handleInputChange}
-              rows="4"
-              placeholder="Add any additional notes here..."
+            <label htmlFor="csvFile">Attach CSV File:</label>
+            <input
+              type="file"
+              id="csvFile"
+              accept=".csv"
+              onChange={handleFileChange}
             />
+            {csvFile && <span style={{ marginLeft: '1em' }}>{csvFile.name}</span>}
           </div>
-
           {/* Submit Button */}
           <div className="form-actions">
             <button type="submit" className="btn-primary">
