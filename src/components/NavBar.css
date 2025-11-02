@@ -69,6 +69,14 @@
   margin-left: auto;
 }
 
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
+}
+
 .navbar-right a {
   color: white;
   text-decoration: none;

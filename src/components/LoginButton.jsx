@@ -5,7 +5,8 @@ import logoGreen from '../assets/PP_green.png';
 
 export default function LoginButton() {
   const handleLogin = () => {
-    window.location.href = 'http://localhost:3000/auth/google_oauth2';
+    const apiUrl = import.meta.env.VITE_API_URL;
+    window.location.href = `${apiUrl}/auth/google_oauth2`;
   };
 
   return (

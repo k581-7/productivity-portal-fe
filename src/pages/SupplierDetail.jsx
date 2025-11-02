@@ -316,7 +316,7 @@ export default function SupplierDetail() {
                 </div>
               </div>
 
-              {/* Totals Section */}
+              {/* Request Totals Section */}
               <div className="form-section">
                 <h2>Request Totals</h2>
                 
@@ -328,6 +328,18 @@ export default function SupplierDetail() {
                       id="total_requests"
                       name="total_requests"
                       value={formData.total_requests || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="total_pending">Total Pending:</label>
+                    <input
+                      type="number"
+                      id="total_pending"
+                      name="total_pending"
+                      value={formData.total_pending || 0}
                       onChange={handleInputChange}
                       min="0"
                     />
@@ -346,12 +358,12 @@ export default function SupplierDetail() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="total_pending">Total Pending:</label>
+                    <label htmlFor="total_bad_data">Total Bad Data:</label>
                     <input
                       type="number"
-                      id="total_pending"
-                      name="total_pending"
-                      value={formData.total_pending || 0}
+                      id="total_bad_data"
+                      name="total_bad_data"
+                      value={formData.total_bad_data || 0}
                       onChange={handleInputChange}
                       min="0"
                     />
@@ -359,59 +371,23 @@ export default function SupplierDetail() {
                 </div>
               </div>
 
-              {/* Mapping Details */}
+              {/* Automapping */}
               <div className="form-section">
-                <h2>Mapping Details</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h2 style={{ margin: 0 }}>Automapping</h2>
+                  <div className="form-group" style={{ margin: 0, width: '150px' }}>
+                    <input
+                      type="number"
+                      name="automapping_total"
+                      value={formData.automapping_total || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                      style={{ textAlign: 'right', fontWeight: 'bold' }}
+                    />
+                  </div>
+                </div>
                 
                 <div className="form-grid">
-                  <div className="form-group">
-                    <label htmlFor="automapping_covered_total">Automapping Covered:</label>
-                    <input
-                      type="number"
-                      id="automapping_covered_total"
-                      name="automapping_covered_total"
-                      value={formData.automapping_covered_total || 0}
-                      onChange={handleInputChange}
-                      min="0"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="manual_total">Manual Total:</label>
-                    <input
-                      type="number"
-                      id="manual_total"
-                      name="manual_total"
-                      value={formData.manual_total || 0}
-                      onChange={handleInputChange}
-                      min="0"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="manually_mapped">Manually Mapped:</label>
-                    <input
-                      type="number"
-                      id="manually_mapped"
-                      name="manually_mapped"
-                      value={formData.manually_mapped || 0}
-                      onChange={handleInputChange}
-                      min="0"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="suggestions_total">Suggestions Total:</label>
-                    <input
-                      type="number"
-                      id="suggestions_total"
-                      name="suggestions_total"
-                      value={formData.suggestions_total || 0}
-                      onChange={handleInputChange}
-                      min="0"
-                    />
-                  </div>
-
                   <div className="form-group">
                     <label htmlFor="accepted_total">Accepted Total:</label>
                     <input
@@ -435,14 +411,50 @@ export default function SupplierDetail() {
                       min="0"
                     />
                   </div>
+
+                  <div className="form-group">
+                    <label htmlFor="duplicate_count">Duplicate Count:</label>
+                    <input
+                      type="number"
+                      id="duplicate_count"
+                      name="duplicate_count"
+                      value={formData.duplicate_count || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Data Quality */}
+              {/* Manual Mapping */}
               <div className="form-section">
-                <h2>Data Quality</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h2 style={{ margin: 0 }}>Manual Mapping</h2>
+                  <div className="form-group" style={{ margin: 0, width: '150px' }}>
+                    <input
+                      type="number"
+                      name="manual_mapping_total"
+                      value={formData.manual_mapping_total || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                      style={{ textAlign: 'right', fontWeight: 'bold' }}
+                    />
+                  </div>
+                </div>
                 
                 <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="manually_mapped">Manually Mapped:</label>
+                    <input
+                      type="number"
+                      id="manually_mapped"
+                      name="manually_mapped"
+                      value={formData.manually_mapped || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
+
                   <div className="form-group">
                     <label htmlFor="incorrect_supplier_data">Incorrect Supplier Data:</label>
                     <input
@@ -456,12 +468,12 @@ export default function SupplierDetail() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="duplicate_count">Duplicate Count:</label>
+                    <label htmlFor="insufficient_info">Insufficient Info:</label>
                     <input
                       type="number"
-                      id="duplicate_count"
-                      name="duplicate_count"
-                      value={formData.duplicate_count || 0}
+                      id="insufficient_info"
+                      name="insufficient_info"
+                      value={formData.insufficient_info || 0}
                       onChange={handleInputChange}
                       min="0"
                     />
@@ -493,25 +505,25 @@ export default function SupplierDetail() {
                 </div>
               </div>
 
-              {/* Not Covered Section */}
+              {/* Not Covered */}
               <div className="form-section">
-                <h2>Not Covered</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h2 style={{ margin: 0 }}>Not Covered</h2>
+                  <div className="form-group" style={{ margin: 0, width: '150px' }}>
+                    <input
+                      type="number"
+                      name="not_covered_total"
+                      value={formData.not_covered_total || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                      style={{ textAlign: 'right', fontWeight: 'bold' }}
+                    />
+                  </div>
+                </div>
                 
                 <div className="form-grid">
                   <div className="form-group">
-                    <label htmlFor="not_covered">Not Covered:</label>
-                    <input
-                      type="number"
-                      id="not_covered"
-                      name="not_covered"
-                      value={formData.not_covered || 0}
-                      onChange={handleInputChange}
-                      min="0"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="nc_manually_mapped">NC Manually Mapped:</label>
+                    <label htmlFor="nc_manually_mapped">Manually Mapped:</label>
                     <input
                       type="number"
                       id="nc_manually_mapped"
@@ -523,19 +535,7 @@ export default function SupplierDetail() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="nc_created_property">NC Created Property:</label>
-                    <input
-                      type="number"
-                      id="nc_created_property"
-                      name="nc_created_property"
-                      value={formData.nc_created_property || 0}
-                      onChange={handleInputChange}
-                      min="0"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="nc_incorrect_supplier">NC Incorrect Supplier:</label>
+                    <label htmlFor="nc_incorrect_supplier">Incorrect Supplier Data:</label>
                     <input
                       type="number"
                       id="nc_incorrect_supplier"
@@ -547,7 +547,141 @@ export default function SupplierDetail() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="jp_props">JP Props:</label>
+                    <label htmlFor="nc_insufficient_info">Insufficient Info:</label>
+                    <input
+                      type="number"
+                      id="nc_insufficient_info"
+                      name="nc_insufficient_info"
+                      value={formData.nc_insufficient_info || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="nc_created_property">Created Property:</label>
+                    <input
+                      type="number"
+                      id="nc_created_property"
+                      name="nc_created_property"
+                      value={formData.nc_created_property || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="nc_reactivated_total">Reactivated Total:</label>
+                    <input
+                      type="number"
+                      id="nc_reactivated_total"
+                      name="nc_reactivated_total"
+                      value={formData.nc_reactivated_total || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bad Suggestions */}
+              <div className="form-section">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h2 style={{ margin: 0 }}>Bad Suggestions</h2>
+                  <div className="form-group" style={{ margin: 0, width: '150px' }}>
+                    <input
+                      type="number"
+                      name="bad_suggestions_total"
+                      value={formData.bad_suggestions_total || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                      style={{ textAlign: 'right', fontWeight: 'bold' }}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="bs_manually_mapped">Manually Mapped:</label>
+                    <input
+                      type="number"
+                      id="bs_manually_mapped"
+                      name="bs_manually_mapped"
+                      value={formData.bs_manually_mapped || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="bs_incorrect_supplier">Incorrect Supplier Data:</label>
+                    <input
+                      type="number"
+                      id="bs_incorrect_supplier"
+                      name="bs_incorrect_supplier"
+                      value={formData.bs_incorrect_supplier || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="bs_insufficient_info">Insufficient Info:</label>
+                    <input
+                      type="number"
+                      id="bs_insufficient_info"
+                      name="bs_insufficient_info"
+                      value={formData.bs_insufficient_info || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="bs_created_property">Created Property:</label>
+                    <input
+                      type="number"
+                      id="bs_created_property"
+                      name="bs_created_property"
+                      value={formData.bs_created_property || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="bs_reactivated_total">Reactivated Total:</label>
+                    <input
+                      type="number"
+                      id="bs_reactivated_total"
+                      name="bs_reactivated_total"
+                      value={formData.bs_reactivated_total || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Others */}
+              <div className="form-section">
+                <h2>Others</h2>
+                
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="automapping_covered_total">Automapping Covered:</label>
+                    <input
+                      type="number"
+                      id="automapping_covered_total"
+                      name="automapping_covered_total"
+                      value={formData.automapping_covered_total || 0}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="jp_props">JPN Properties:</label>
                     <input
                       type="number"
                       id="jp_props"
@@ -615,7 +749,7 @@ export default function SupplierDetail() {
                 </div>
               </div>
 
-              {/* Totals Section */}
+              {/* Request Totals Section */}
               <div className="info-section">
                 <h2>Request Totals</h2>
                 <div className="stats-grid">
@@ -624,36 +758,24 @@ export default function SupplierDetail() {
                     <div className="stat-label">Total Requests</div>
                   </div>
                   <div className="stat-card">
+                    <div className="stat-value">{supplier.total_pending || 0}</div>
+                    <div className="stat-label">Total Pending</div>
+                  </div>
+                  <div className="stat-card">
                     <div className="stat-value">{supplier.total_mapped || 0}</div>
                     <div className="stat-label">Total Mapped</div>
                   </div>
                   <div className="stat-card">
-                    <div className="stat-value">{supplier.total_pending || 0}</div>
-                    <div className="stat-label">Total Pending</div>
+                    <div className="stat-value">{supplier.total_bad_data || 0}</div>
+                    <div className="stat-label">Total Bad Data</div>
                   </div>
                 </div>
               </div>
 
-              {/* Mapping Details */}
+              {/* Automapping */}
               <div className="info-section">
-                <h2>Mapping Details</h2>
+                <h2>Automapping: <span className="value">{supplier.automapping_total || 0}</span></h2>
                 <div className="info-grid">
-                  <div className="info-item">
-                    <span className="label">Automapping Covered:</span>
-                    <span className="value">{supplier.automapping_covered_total || 0}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Manual Total:</span>
-                    <span className="value">{supplier.manual_total || 0}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Manually Mapped:</span>
-                    <span className="value">{supplier.manually_mapped || 0}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Suggestions Total:</span>
-                    <span className="value">{supplier.suggestions_total || 0}</span>
-                  </div>
                   <div className="info-item">
                     <span className="label">Accepted Total:</span>
                     <span className="value">{supplier.accepted_total || 0}</span>
@@ -662,20 +784,28 @@ export default function SupplierDetail() {
                     <span className="label">Dismissed Total:</span>
                     <span className="value">{supplier.dismissed_total || 0}</span>
                   </div>
+                  <div className="info-item">
+                    <span className="label">Duplicate Count:</span>
+                    <span className="value">{supplier.duplicate_count || 0}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Data Quality */}
+              {/* Manual Mapping */}
               <div className="info-section">
-                <h2>Data Quality</h2>
+                <h2>Manual Mapping: <span className="value">{supplier.manual_mapping_total || 0}</span></h2>
                 <div className="info-grid">
+                  <div className="info-item">
+                    <span className="label">Manually Mapped:</span>
+                    <span className="value">{supplier.manually_mapped || 0}</span>
+                  </div>
                   <div className="info-item">
                     <span className="label">Incorrect Supplier Data:</span>
                     <span className="value">{supplier.incorrect_supplier_data || 0}</span>
                   </div>
                   <div className="info-item">
-                    <span className="label">Duplicate Count:</span>
-                    <span className="value">{supplier.duplicate_count || 0}</span>
+                    <span className="label">Insufficient Info:</span>
+                    <span className="value">{supplier.insufficient_info || 0}</span>
                   </div>
                   <div className="info-item">
                     <span className="label">Created Property:</span>
@@ -688,28 +818,70 @@ export default function SupplierDetail() {
                 </div>
               </div>
 
-              {/* Not Covered Section */}
+              {/* Not Covered */}
               <div className="info-section">
-                <h2>Not Covered</h2>
+                <h2>Not Covered: <span className="value">{supplier.not_covered_total || 0}</span></h2>
                 <div className="info-grid">
                   <div className="info-item">
-                    <span className="label">Not Covered:</span>
-                    <span className="value">{supplier.not_covered || 0}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">NC Manually Mapped:</span>
+                    <span className="label">Manually Mapped:</span>
                     <span className="value">{supplier.nc_manually_mapped || 0}</span>
                   </div>
                   <div className="info-item">
-                    <span className="label">NC Created Property:</span>
-                    <span className="value">{supplier.nc_created_property || 0}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">NC Incorrect Supplier:</span>
+                    <span className="label">Incorrect Supplier Data:</span>
                     <span className="value">{supplier.nc_incorrect_supplier || 0}</span>
                   </div>
                   <div className="info-item">
-                    <span className="label">JP Props:</span>
+                    <span className="label">Insufficient Info:</span>
+                    <span className="value">{supplier.nc_insufficient_info || 0}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">Created Property:</span>
+                    <span className="value">{supplier.nc_created_property || 0}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">Reactivated Total:</span>
+                    <span className="value">{supplier.nc_reactivated_total || 0}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bad Suggestions */}
+              <div className="info-section">
+                <h2>Bad Suggestions: <span className="value">{supplier.bad_suggestions_total || 0}</span></h2>
+                <div className="info-grid">
+                  <div className="info-item">
+                    <span className="label">Manually Mapped:</span>
+                    <span className="value">{supplier.bs_manually_mapped || 0}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">Incorrect Supplier Data:</span>
+                    <span className="value">{supplier.bs_incorrect_supplier || 0}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">Insufficient Info:</span>
+                    <span className="value">{supplier.bs_insufficient_info || 0}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">Created Property:</span>
+                    <span className="value">{supplier.bs_created_property || 0}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">Reactivated Total:</span>
+                    <span className="value">{supplier.bs_reactivated_total || 0}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Others */}
+              <div className="info-section">
+                <h2>Others</h2>
+                <div className="info-grid">
+                  <div className="info-item">
+                    <span className="label">Automapping Covered:</span>
+                    <span className="value">{supplier.automapping_covered_total || 0}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="label">JPN Properties:</span>
                     <span className="value">{supplier.jp_props || 0}</span>
                   </div>
                 </div>

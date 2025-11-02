@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/NavBar';
+import LoadingSpinner from '../components/LoadingSpinner';
 const apiUrl = import.meta.env.VITE_API_URL;
 import './Suppliers.css';
 
@@ -95,14 +96,7 @@ export default function Suppliers() {
   };
 
   if (loading) {
-    return (
-      <div>
-        <Navbar user={user} />
-        <div className="suppliers-container">
-          <div className="loading">Loading suppliers...</div>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {

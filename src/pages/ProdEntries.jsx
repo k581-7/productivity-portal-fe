@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 const apiUrl = import.meta.env.VITE_API_URL;
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/NavBar';
+import LoadingSpinner from '../components/LoadingSpinner';
 import './ProdEntries.css';
 
 export default function ProdEntries() {
@@ -12,8 +13,9 @@ export default function ProdEntries() {
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     supplier_id: '',
-    date: new Date().toISOString().split('T')[0],
-    source: 'autosheet' // default source
+    source: 'autosheet', // default source
+    manualsheet_type: '', // for manualsheet subcategory
+    date: new Date().toISOString().split('T')[0] // default to today's date
   });
   const [csvFile, setCsvFile] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
@@ -83,7 +85,9 @@ export default function ProdEntries() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
+      // Reset manualsheet_type if source changes away from manualsheet
+      ...(name === 'source' && value !== 'manualsheet' && { manualsheet_type: '' })
     }));
   };
 
@@ -97,16 +101,35 @@ export default function ProdEntries() {
       showNotification('Please select a supplier', 'error');
       return;
     }
+    if (!formData.date) {
+      showNotification('Please select a date', 'error');
+      return;
+    }
     if (!csvFile) {
       showNotification('Please attach a CSV file', 'error');
       return;
     }
+    if (formData.source === 'manualsheet' && !formData.manualsheet_type) {
+      showNotification('Please select a manualsheet type', 'error');
+      return;
+    }
     try {
-  const formDataToSend = new FormData();
-  formDataToSend.append('supplier_id', formData.supplier_id);
-  formDataToSend.append('date', formData.date);
-  formDataToSend.append('source', formData.source);
-  formDataToSend.append('csv_file', csvFile);
+      const formDataToSend = new FormData();
+      formDataToSend.append('supplier_id', formData.supplier_id);
+      formDataToSend.append('date', formData.date);
+      formDataToSend.append('source', formData.source);
+      formDataToSend.append('csv_file', csvFile);
+      if (formData.source === 'manualsheet' && formData.manualsheet_type) {
+        formDataToSend.append('manualsheet_type', formData.manualsheet_type);
+      }
+
+      console.log('Submitting with:', {
+        supplier_id: formData.supplier_id,
+        date: formData.date,
+        source: formData.source,
+        manualsheet_type: formData.manualsheet_type,
+        csv_file: csvFile?.name
+      });
 
       const res = await fetch(`${apiUrl}/api/v1/prod_entries`, {
         method: 'POST',
@@ -118,7 +141,8 @@ export default function ProdEntries() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to create prod entry');
+        console.error('Backend error:', errorData);
+        throw new Error(errorData.error || errorData.errors?.join(', ') || 'Failed to create prod entry');
       }
 
       const data = await res.json();
@@ -134,8 +158,9 @@ export default function ProdEntries() {
   const resetForm = () => {
     setFormData({
       supplier_id: '',
-      date: new Date().toISOString().split('T')[0],
-      source: 'autosheet'
+      source: 'autosheet',
+      manualsheet_type: '',
+      date: new Date().toISOString().split('T')[0]
     });
     setCsvFile(null);
   };
@@ -174,14 +199,7 @@ export default function ProdEntries() {
   };
 
   if (loading) {
-    return (
-      <div>
-        <Navbar user={user} />
-        <div style={{ padding: '20px', textAlign: 'center' }}>
-          <h2>Loading...</h2>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {
@@ -244,51 +262,76 @@ export default function ProdEntries() {
               )}
             </select>
           </div>
-          {/* Date */}
+          {/* Date Selection */}
           <div className="form-group">
-            <label htmlFor="date">Date:</label>
+            <label htmlFor="date">
+              Date: <span className="required">*</span>
+            </label>
             <input
               type="date"
               id="date"
               name="date"
               value={formData.date}
               onChange={handleInputChange}
-              max={new Date().toISOString().split('T')[0]}
+              required
             />
           </div>
           {/* Source Selection */}
           <div className="form-group">
             <label>Source:</label>
             <div style={{ display: 'flex', gap: '2em', marginTop: '0.5em' }}>
-              <label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5em' }}>
                 <input
                   type="radio"
                   name="source"
                   value="autosheet"
                   checked={formData.source === 'autosheet'}
                   onChange={handleInputChange}
-                /> Autosheet
+                />
+                Autosheet
               </label>
-              <label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5em' }}>
                 <input
                   type="radio"
                   name="source"
                   value="manualsheet"
                   checked={formData.source === 'manualsheet'}
                   onChange={handleInputChange}
-                /> Manualsheet
+                />
+                Manualsheet
               </label>
-              <label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5em' }}>
                 <input
                   type="radio"
                   name="source"
                   value="logs"
                   checked={formData.source === 'logs'}
                   onChange={handleInputChange}
-                /> Logs
+                />
+                Logs
               </label>
             </div>
           </div>
+          {/* Manualsheet Type - Only shown when Manualsheet is selected */}
+          {formData.source === 'manualsheet' && (
+            <div className="form-group">
+              <label htmlFor="manualsheet_type">
+                Manualsheet Type: <span className="required">*</span>
+              </label>
+              <select
+                id="manualsheet_type"
+                name="manualsheet_type"
+                value={formData.manualsheet_type}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="" disabled hidden>-- Select Type --</option>
+                <option value="common">Common</option>
+                <option value="bad_suggestions">Bad Suggestions</option>
+                <option value="not_covered">Not Covered</option>
+              </select>
+            </div>
+          )}
           {/* CSV File Attachment */}
           <div className="form-group">
             <label htmlFor="csvFile">Attach CSV File:</label>

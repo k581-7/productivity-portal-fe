@@ -4,12 +4,14 @@ import Dashboard from './Dashboard';
 import UserManagement from './pages/UserManagement';
 import PendingUsers from './pages/PendingUsers';
 import LoginButton from './components/LoginButton';
+import LoadingSpinner from './components/LoadingSpinner';
 import ProdEntries from './pages/ProdEntries';
 import Suppliers from './pages/Suppliers';
 import SupplierDetail from './pages/SupplierDetail';
 import SupplierCreate from './pages/SupplierCreate';
 import DailyProd from "./pages/DailyProd";
 import Summary from "./pages/Summary";
+import UploadHistory from "./pages/UploadHistory";
 
 export const UserContext = createContext(null);
 export const useUser = () => useContext(UserContext);
@@ -61,7 +63,7 @@ export default function App() {
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   return (
@@ -77,19 +79,43 @@ export default function App() {
         />
         <Route
           path="/prod-entries"
-          element={user ? <ProdEntries /> : <Navigate to="/" replace />}
+          element={
+            user && (user.role === 'junior' || user.role === 'leader' || user.role === 'developer') ? (
+              <ProdEntries />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
         />
         <Route
           path="/suppliers"
-          element={user ? <Suppliers /> : <Navigate to="/" replace />}
+          element={
+            user && (user.role === 'guest' || user.role === 'leader' || user.role === 'developer') ? (
+              <Suppliers />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
         />
         <Route
           path="/suppliers/create"
-          element={user ? <SupplierCreate /> : <Navigate to="/" replace />}
+          element={
+            user && (user.role === 'leader' || user.role === 'developer') ? (
+              <SupplierCreate />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
         />
         <Route
           path="/suppliers/:id"
-          element={user ? <SupplierDetail /> : <Navigate to="/" replace />}
+          element={
+            user && (user.role === 'guest' || user.role === 'leader' || user.role === 'developer') ? (
+              <SupplierDetail />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
         />
         <Route
           path="/daily-prod"
@@ -97,7 +123,23 @@ export default function App() {
         />
         <Route
           path="/summary"
-          element={user ? <Summary /> : <Navigate to="/" replace />}
+          element={
+            user && (user.role === 'guest' || user.role === 'leader' || user.role === 'developer') ? (
+              <Summary />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
+        />
+        <Route
+          path="/upload-history"
+          element={
+            user && (user.role === 'leader' || user.role === 'developer') ? (
+              <UploadHistory />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
         />
         <Route
           path="/user-management"

@@ -16,17 +16,44 @@ export default function NavBar() {
 
           <div className="navbar-links">
             <Link to="/dashboard">Dashboard</Link>
-            {/* Hide Productivity Entry for guests */}
-            {user?.role !== 'guest' && <Link to="/prod-entries">Productivity Entry</Link>}
-            <Link to="/suppliers">Suppliers</Link>
+            
+            {/* Productivity Entry - Junior, Leader, Developer */}
+            {(user?.role === 'junior' || user?.role === 'leader' || user?.role === 'developer') && (
+              <Link to="/prod-entries">Productivity Entry</Link>
+            )}
+            
+            {/* Suppliers - Guest (view only), Leader (can edit), Developer */}
+            {(user?.role === 'guest' || user?.role === 'leader' || user?.role === 'developer') && (
+              <Link to="/suppliers">Suppliers</Link>
+            )}
+            
+            {/* Daily Prod - Junior (no edit), Guest (no edit), Leader (can edit), Developer */}
             <Link to="/daily-prod">Daily Prod</Link>
-            <Link to="/summary">Summary</Link>
+            
+            {/* Summary - Guest, Leader, Developer */}
+            {(user?.role === 'guest' || user?.role === 'leader' || user?.role === 'developer') && (
+              <Link to="/summary">Summary</Link>
+            )}
+            
+            {/* Upload History - Leader, Developer */}
+            {(user?.role === 'leader' || user?.role === 'developer') && (
+              <Link to="/upload-history">Upload History</Link>
+            )}
+            
+            {/* User Management - Developer only */}
             {user?.role === 'developer' && (
               <Link to="/user-management">User Management</Link>
             )}
           </div>
 
           <div className="navbar-right">
+            {user?.picture && (
+              <img 
+                src={user.picture} 
+                alt={user.name} 
+                className="user-avatar"
+              />
+            )}
             <span>{user?.name || 'Guest'}</span>
             <a
               href="#"

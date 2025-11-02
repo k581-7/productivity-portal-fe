@@ -16,21 +16,36 @@ export default function SupplierCreate() {
     total_requests: 0,
     total_mapped: 0,
     total_pending: 0,
-    automapping_covered_total: 0,
-    suggestions_total: 0,
+    total_bad_data: 0,
+    // Automapping
+    automapping_total: 0,
     accepted_total: 0,
     dismissed_total: 0,
-    manual_total: 0,
+    duplicate_count: 0,
+    // Manual Mapping
+    manual_mapping_total: 0,
     manually_mapped: 0,
     incorrect_supplier_data: 0,
-    duplicate_count: 0,
+    insufficient_info: 0,
     created_property: 0,
-    not_covered: 0,
-    nc_manually_mapped: 0,
-    nc_created_property: 0,
-    nc_incorrect_supplier: 0,
-    jp_props: 0,
     reactivated_total: 0,
+    // Not Covered
+    not_covered_total: 0,
+    nc_manually_mapped: 0,
+    nc_incorrect_supplier: 0,
+    nc_insufficient_info: 0,
+    nc_created_property: 0,
+    nc_reactivated_total: 0,
+    // Bad Suggestions
+    bad_suggestions_total: 0,
+    bs_manually_mapped: 0,
+    bs_incorrect_supplier: 0,
+    bs_insufficient_info: 0,
+    bs_created_property: 0,
+    bs_reactivated_total: 0,
+    // Others
+    automapping_covered_total: 0,
+    jp_props: 0,
     remarks: ''
   });
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
@@ -83,21 +98,36 @@ export default function SupplierCreate() {
       total_requests: parseInt(formData.total_requests) || 0,
       total_mapped: parseInt(formData.total_mapped) || 0,
       total_pending: parseInt(formData.total_pending) || 0,
-      automapping_covered_total: parseInt(formData.automapping_covered_total) || 0,
-      suggestions_total: parseInt(formData.suggestions_total) || 0,
+      total_bad_data: parseInt(formData.total_bad_data) || 0,
+      // Automapping
+      automapping_total: parseInt(formData.automapping_total) || 0,
       accepted_total: parseInt(formData.accepted_total) || 0,
       dismissed_total: parseInt(formData.dismissed_total) || 0,
-      manual_total: parseInt(formData.manual_total) || 0,
+      duplicate_count: parseInt(formData.duplicate_count) || 0,
+      // Manual Mapping
+      manual_mapping_total: parseInt(formData.manual_mapping_total) || 0,
       manually_mapped: parseInt(formData.manually_mapped) || 0,
       incorrect_supplier_data: parseInt(formData.incorrect_supplier_data) || 0,
-      duplicate_count: parseInt(formData.duplicate_count) || 0,
+      insufficient_info: parseInt(formData.insufficient_info) || 0,
       created_property: parseInt(formData.created_property) || 0,
-      not_covered: parseInt(formData.not_covered) || 0,
+      reactivated_total: parseInt(formData.reactivated_total) || 0,
+      // Not Covered
+      not_covered_total: parseInt(formData.not_covered_total) || 0,
       nc_manually_mapped: parseInt(formData.nc_manually_mapped) || 0,
-      nc_created_property: parseInt(formData.nc_created_property) || 0,
       nc_incorrect_supplier: parseInt(formData.nc_incorrect_supplier) || 0,
-      jp_props: parseInt(formData.jp_props) || 0,
-      reactivated_total: parseInt(formData.reactivated_total) || 0
+      nc_insufficient_info: parseInt(formData.nc_insufficient_info) || 0,
+      nc_created_property: parseInt(formData.nc_created_property) || 0,
+      nc_reactivated_total: parseInt(formData.nc_reactivated_total) || 0,
+      // Bad Suggestions
+      bad_suggestions_total: parseInt(formData.bad_suggestions_total) || 0,
+      bs_manually_mapped: parseInt(formData.bs_manually_mapped) || 0,
+      bs_incorrect_supplier: parseInt(formData.bs_incorrect_supplier) || 0,
+      bs_insufficient_info: parseInt(formData.bs_insufficient_info) || 0,
+      bs_created_property: parseInt(formData.bs_created_property) || 0,
+      bs_reactivated_total: parseInt(formData.bs_reactivated_total) || 0,
+      // Others
+      automapping_covered_total: parseInt(formData.automapping_covered_total) || 0,
+      jp_props: parseInt(formData.jp_props) || 0
     };
 
     try {
@@ -262,6 +292,18 @@ export default function SupplierCreate() {
                 </div>
 
                 <div className="form-group">
+                  <label htmlFor="total_pending">Total Pending:</label>
+                  <input
+                    type="number"
+                    id="total_pending"
+                    name="total_pending"
+                    value={formData.total_pending}
+                    onChange={handleInputChange}
+                    min="0"
+                  />
+                </div>
+
+                <div className="form-group">
                   <label htmlFor="total_mapped">Total Mapped:</label>
                   <input
                     type="number"
@@ -274,12 +316,12 @@ export default function SupplierCreate() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="total_pending">Total Pending:</label>
+                  <label htmlFor="total_bad_data">Total Bad Data:</label>
                   <input
                     type="number"
-                    id="total_pending"
-                    name="total_pending"
-                    value={formData.total_pending}
+                    id="total_bad_data"
+                    name="total_bad_data"
+                    value={formData.total_bad_data}
                     onChange={handleInputChange}
                     min="0"
                   />
@@ -287,35 +329,22 @@ export default function SupplierCreate() {
               </div>
             </div>
 
-            {/* Mapping Details */}
+            {/* Automapping */}
             <div className="form-section">
-              <h2>Mapping Details</h2>
+              <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Automapping</span>
+                <input
+                  type="number"
+                  id="automapping_total"
+                  name="automapping_total"
+                  value={formData.automapping_total}
+                  onChange={handleInputChange}
+                  min="0"
+                  style={{ width: '150px', textAlign: 'right', fontWeight: 'bold' }}
+                />
+              </h2>
               
               <div className="form-grid">
-                <div className="form-group">
-                  <label htmlFor="automapping_covered_total">Automapping Covered Total:</label>
-                  <input
-                    type="number"
-                    id="automapping_covered_total"
-                    name="automapping_covered_total"
-                    value={formData.automapping_covered_total}
-                    onChange={handleInputChange}
-                    min="0"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="suggestions_total">Suggestions Total:</label>
-                  <input
-                    type="number"
-                    id="suggestions_total"
-                    name="suggestions_total"
-                    value={formData.suggestions_total}
-                    onChange={handleInputChange}
-                    min="0"
-                  />
-                </div>
-
                 <div className="form-group">
                   <label htmlFor="accepted_total">Accepted Total:</label>
                   <input
@@ -341,17 +370,35 @@ export default function SupplierCreate() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="manual_total">Manual Total:</label>
+                  <label htmlFor="duplicate_count">Duplicate Count:</label>
                   <input
                     type="number"
-                    id="manual_total"
-                    name="manual_total"
-                    value={formData.manual_total}
+                    id="duplicate_count"
+                    name="duplicate_count"
+                    value={formData.duplicate_count}
                     onChange={handleInputChange}
                     min="0"
                   />
                 </div>
+              </div>
+            </div>
 
+            {/* Manual Mapping */}
+            <div className="form-section">
+              <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Manual Mapping</span>
+                <input
+                  type="number"
+                  id="manual_mapping_total"
+                  name="manual_mapping_total"
+                  value={formData.manual_mapping_total}
+                  onChange={handleInputChange}
+                  min="0"
+                  style={{ width: '150px', textAlign: 'right', fontWeight: 'bold' }}
+                />
+              </h2>
+              
+              <div className="form-grid">
                 <div className="form-group">
                   <label htmlFor="manually_mapped">Manually Mapped:</label>
                   <input
@@ -363,14 +410,7 @@ export default function SupplierCreate() {
                     min="0"
                   />
                 </div>
-              </div>
-            </div>
 
-            {/* Data Quality */}
-            <div className="form-section">
-              <h2>Data Quality</h2>
-              
-              <div className="form-grid">
                 <div className="form-group">
                   <label htmlFor="incorrect_supplier_data">Incorrect Supplier Data:</label>
                   <input
@@ -384,12 +424,12 @@ export default function SupplierCreate() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="duplicate_count">Duplicate Count:</label>
+                  <label htmlFor="insufficient_info">Insufficient Info:</label>
                   <input
                     type="number"
-                    id="duplicate_count"
-                    name="duplicate_count"
-                    value={formData.duplicate_count}
+                    id="insufficient_info"
+                    name="insufficient_info"
+                    value={formData.insufficient_info}
                     onChange={handleInputChange}
                     min="0"
                   />
@@ -421,25 +461,24 @@ export default function SupplierCreate() {
               </div>
             </div>
 
-            {/* Not Covered Section */}
+            {/* Not Covered */}
             <div className="form-section">
-              <h2>Not Covered</h2>
+              <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Not Covered</span>
+                <input
+                  type="number"
+                  id="not_covered_total"
+                  name="not_covered_total"
+                  value={formData.not_covered_total}
+                  onChange={handleInputChange}
+                  min="0"
+                  style={{ width: '150px', textAlign: 'right', fontWeight: 'bold' }}
+                />
+              </h2>
               
               <div className="form-grid">
                 <div className="form-group">
-                  <label htmlFor="not_covered">Not Covered:</label>
-                  <input
-                    type="number"
-                    id="not_covered"
-                    name="not_covered"
-                    value={formData.not_covered}
-                    onChange={handleInputChange}
-                    min="0"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="nc_manually_mapped">NC Manually Mapped:</label>
+                  <label htmlFor="nc_manually_mapped">Manually Mapped:</label>
                   <input
                     type="number"
                     id="nc_manually_mapped"
@@ -451,19 +490,7 @@ export default function SupplierCreate() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="nc_created_property">NC Created Property:</label>
-                  <input
-                    type="number"
-                    id="nc_created_property"
-                    name="nc_created_property"
-                    value={formData.nc_created_property}
-                    onChange={handleInputChange}
-                    min="0"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="nc_incorrect_supplier">NC Incorrect Supplier:</label>
+                  <label htmlFor="nc_incorrect_supplier">Incorrect Supplier Data:</label>
                   <input
                     type="number"
                     id="nc_incorrect_supplier"
@@ -475,7 +502,140 @@ export default function SupplierCreate() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="jp_props">JP Props:</label>
+                  <label htmlFor="nc_insufficient_info">Insufficient Info:</label>
+                  <input
+                    type="number"
+                    id="nc_insufficient_info"
+                    name="nc_insufficient_info"
+                    value={formData.nc_insufficient_info}
+                    onChange={handleInputChange}
+                    min="0"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="nc_created_property">Created Property:</label>
+                  <input
+                    type="number"
+                    id="nc_created_property"
+                    name="nc_created_property"
+                    value={formData.nc_created_property}
+                    onChange={handleInputChange}
+                    min="0"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="nc_reactivated_total">Reactivated Total:</label>
+                  <input
+                    type="number"
+                    id="nc_reactivated_total"
+                    name="nc_reactivated_total"
+                    value={formData.nc_reactivated_total}
+                    onChange={handleInputChange}
+                    min="0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Bad Suggestions */}
+            <div className="form-section">
+              <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Bad Suggestions</span>
+                <input
+                  type="number"
+                  id="bad_suggestions_total"
+                  name="bad_suggestions_total"
+                  value={formData.bad_suggestions_total}
+                  onChange={handleInputChange}
+                  min="0"
+                  style={{ width: '150px', textAlign: 'right', fontWeight: 'bold' }}
+                />
+              </h2>
+              
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="bs_manually_mapped">Manually Mapped:</label>
+                  <input
+                    type="number"
+                    id="bs_manually_mapped"
+                    name="bs_manually_mapped"
+                    value={formData.bs_manually_mapped}
+                    onChange={handleInputChange}
+                    min="0"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="bs_incorrect_supplier">Incorrect Supplier Data:</label>
+                  <input
+                    type="number"
+                    id="bs_incorrect_supplier"
+                    name="bs_incorrect_supplier"
+                    value={formData.bs_incorrect_supplier}
+                    onChange={handleInputChange}
+                    min="0"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="bs_insufficient_info">Insufficient Info:</label>
+                  <input
+                    type="number"
+                    id="bs_insufficient_info"
+                    name="bs_insufficient_info"
+                    value={formData.bs_insufficient_info}
+                    onChange={handleInputChange}
+                    min="0"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="bs_created_property">Created Property:</label>
+                  <input
+                    type="number"
+                    id="bs_created_property"
+                    name="bs_created_property"
+                    value={formData.bs_created_property}
+                    onChange={handleInputChange}
+                    min="0"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="bs_reactivated_total">Reactivated Total:</label>
+                  <input
+                    type="number"
+                    id="bs_reactivated_total"
+                    name="bs_reactivated_total"
+                    value={formData.bs_reactivated_total}
+                    onChange={handleInputChange}
+                    min="0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Others */}
+            <div className="form-section">
+              <h2>Others</h2>
+              
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="automapping_covered_total">Automapping Covered:</label>
+                  <input
+                    type="number"
+                    id="automapping_covered_total"
+                    name="automapping_covered_total"
+                    value={formData.automapping_covered_total}
+                    onChange={handleInputChange}
+                    min="0"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="jp_props">JPN Properties:</label>
                   <input
                     type="number"
                     id="jp_props"

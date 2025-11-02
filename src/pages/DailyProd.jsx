@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/NavBar';
+import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Box,
   Paper,
@@ -21,7 +22,7 @@ import {
   TableHead,
   TableRow
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 import {
   BarChart,
   Bar,
@@ -36,6 +37,9 @@ import { styled } from '@mui/material/styles';
 import CalendarViewMonthIcon from '@mui/icons-material/CalendarViewMonth';
 import TableViewIcon from '@mui/icons-material/TableView';
 import EqualizerIcon from '@mui/icons-material/Equalizer';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import CheckIcon from '@mui/icons-material/Check';
 import './DailyProd.css';
 
 // Styled components for custom table cells
@@ -77,6 +81,7 @@ const DailyProd = () => {
   const [user, setUser] = useState(null);
   const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState('');
+  const [editModeEnabled, setEditModeEnabled] = useState(false);
 
   const token = localStorage.getItem('token');
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -211,7 +216,12 @@ const DailyProd = () => {
       }
 
       const data = await response.json();
-      console.log('Raw backend response:', JSON.stringify(data, null, 2));
+      console.log('📡 Backend Response Summary:', {
+        totalUsers: data.length,
+        firstUser: data[0]?.user_name,
+        firstUserEntries: data[0]?.entries?.length,
+        sampleEntry: data[0]?.entries?.[0]
+      });
       
       // Extract unique users from the daily_prods data if allUsers is not populated
       if (allUsers.length <= 1 && data.length > 0) {
@@ -246,18 +256,12 @@ const DailyProd = () => {
       data.forEach(userData => {
         const userIndex = processedData.findIndex(u => u.userId === userData.user_id);
         if (userIndex >= 0) {
-          console.log(`Processing entries for user ${userData.user_id}:`, userData.entries);
           userData.entries.forEach(entry => {
             const entryDate = new Date(entry.date);
             const existingEntry = processedData[userIndex].entries.find(
               e => e.date.toDateString() === entryDate.toDateString()
             );
             if (existingEntry) {
-              console.log(`Updating entry for ${entryDate.toDateString()}:`, {
-                status: entry.status,
-                mapping_type: entry.mapping_type,
-                overall_total: entry.overall_total
-              });
               Object.assign(existingEntry, {
                 accepted: entry.accepted || 0,
                 dismissed: entry.dismissed || 0,
@@ -271,7 +275,8 @@ const DailyProd = () => {
                 status: entry.status,
                 auto_total: entry.auto_total || 0,
                 manual_total: entry.manual_total || 0,
-                overall_total: entry.overall_total || 0
+                overall_total: entry.overall_total || 0,
+                cannot_be_mapped: entry.cannot_be_mapped || 0
               });
 
               const userTotals = processedData[userIndex].totals;
@@ -280,14 +285,21 @@ const DailyProd = () => {
               userTotals.autoMap += entry.auto_total || 0;
               userTotals.duplicates += entry.duplicates || 0;
               userTotals.manualMap += entry.manual_total || 0;
-              userTotals.cannotBeMapped += (entry.incorrect_supplier_data || 0) + 
-                                       (entry.insufficient_info || 0);
+              userTotals.cannotBeMapped += entry.cannot_be_mapped || 0;
               userTotals.createdProperty += entry.created_property || 0;
               userTotals.overallTotal += entry.overall_total || 0;
             }
           });
         }
       });
+
+      console.log('✅ Aggregated Totals:', processedData.map(u => ({
+        user: u.userName,
+        cannotBeMapped: u.totals.cannotBeMapped,
+        createdProperty: u.totals.createdProperty,
+        duplicates: u.totals.duplicates,
+        overallTotal: u.totals.overallTotal
+      })));
 
       setDailyProds(processedData);
     } catch (error) {
@@ -363,7 +375,8 @@ const DailyProd = () => {
   };
 
   const handleCellClick = (userId, date, event) => {
-    // Allow developers and leaders to edit
+    // Only allow editing if edit mode is enabled and user has proper role
+    if (!editModeEnabled) return;
     if (user?.role !== 'developer' && user?.role !== 'leader') return;
 
     event?.preventDefault?.();
@@ -375,18 +388,24 @@ const DailyProd = () => {
     // Use a unique cell identifier combining userId and date string
     const cellKey = `${userId}-${date.getDate()}-${date.getMonth()}-${date.getFullYear()}`;
     
+    // Format date as YYYY-MM-DD using local date (no timezone issues)
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    
     console.log('🔵 CLICKED CELL:', {
       cellKey,
       userId,
       date: date.toDateString(),
-      dateISO: date.toISOString(),
+      dateFormatted: dateString,
       entry: entry
     });
     
     setEditingCell({ 
       userId, 
-      date: date.toISOString(),
-      cellKey: cellKey  // Unique identifier for this specific cell
+      date: dateString,  // Store as YYYY-MM-DD string instead of ISO
+      cellKey: cellKey
     });
     setEditValue(cellValue ? cellValue.toString() : '');
   };
@@ -522,6 +541,85 @@ const DailyProd = () => {
     }
   };
 
+  const handleDeleteEntry = async () => {
+    if (!editingCell) return;
+
+    const cellToDelete = { ...editingCell };
+    
+    try {
+      console.log('🗑️ Deleting entry:', {
+        userId: cellToDelete.userId,
+        date: cellToDelete.date, // Already in YYYY-MM-DD format
+        cellKey: cellToDelete.cellKey
+      });
+
+      // Immediately update UI - clear the entry
+      setDailyProds(prevProds => {
+        return prevProds.map(userData => {
+          if (userData.userId === cellToDelete.userId) {
+            const updatedEntries = userData.entries.map(entry => {
+              const entryCellKey = `${cellToDelete.userId}-${entry.date.getDate()}-${entry.date.getMonth()}-${entry.date.getFullYear()}`;
+              
+              if (entryCellKey === cellToDelete.cellKey) {
+                // Reset the entry to empty state
+                return {
+                  ...entry,
+                  accepted: 0,
+                  dismissed: 0,
+                  manually_mapped: 0,
+                  incorrect_supplier_data: 0,
+                  created_property: 0,
+                  insufficient_info: 0,
+                  duplicates: 0,
+                  no_result: 0,
+                  mapping_type: null,
+                  status: null,
+                  auto_total: 0,
+                  manual_total: 0,
+                  overall_total: 0
+                };
+              }
+              return entry;
+            });
+            return { ...userData, entries: updatedEntries };
+          }
+          return userData;
+        });
+      });
+
+      setEditingCell(null);
+      setEditValue('');
+      
+      // Send DELETE request to backend
+      const response = await fetch(`${apiUrl}/api/v1/daily_prods/delete_entry`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          user_id: cellToDelete.userId,
+          date: cellToDelete.date // Pass as-is (YYYY-MM-DD)
+        })
+      });
+
+      if (response.ok) {
+        console.log('✅ Entry deleted successfully');
+        // Refresh to ensure UI is in sync with backend
+        await fetchDailyProds();
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Backend error deleting entry:', errorData);
+        // Refresh anyway to restore correct state
+        await fetchDailyProds();
+      }
+    } catch (error) {
+      console.error('Error in handleDeleteEntry:', error);
+      // Refresh to restore correct state
+      await fetchDailyProds();
+    }
+  };
+
   const handleCellBlur = async (e) => {
     // Don't blur if clicking on the dropdown or its menu
     if (e?.relatedTarget?.closest('.MuiSelect-root, .MuiMenu-root, .MuiMenuItem-root')) {
@@ -531,7 +629,7 @@ const DailyProd = () => {
     if (!editingCell) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/daily_prods/update_cell`, {
+      const response = await fetch(`${apiUrl}/api/v1/daily_prods/update_cell`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -580,16 +678,7 @@ const DailyProd = () => {
   };
 
   if (!user || loading) {
-    return (
-      <Box>
-        <Navbar user={user} />
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="calc(100vh - 64px)">
-          <Typography variant="h6">
-            {!user ? 'Please log in...' : 'Loading data...'}
-          </Typography>
-        </Box>
-      </Box>
-    );
+    return <LoadingSpinner />;
   }
 
   const dates = getDatesForMonth();
@@ -597,8 +686,11 @@ const DailyProd = () => {
   const canEdit = user?.role === 'developer' || user?.role === 'leader';
   const chartData = dailyProds.map(user => ({
     name: user.userName,
-    'Auto Mapping': user.totals.autoMap,
-    'Manual Mapping': user.totals.manualMap,
+    'Accepted': user.totals.accepted,
+    'Dismissed': user.totals.dismissed,
+    'Duplicates': user.totals.duplicates,
+    'Cannot Be Mapped': user.totals.cannotBeMapped,
+    'Created Property': user.totals.createdProperty,
     'Overall Total': user.totals.overallTotal
   }));
 
@@ -691,6 +783,28 @@ const DailyProd = () => {
                 </Stack>
               </Paper>
             </Grid>
+            {canEdit && (
+              <Grid item xs={12} md="auto">
+                <Tooltip title={editModeEnabled ? "Done Editing" : "Enable Editing"}>
+                  <IconButton
+                    onClick={() => {
+                      setEditModeEnabled(!editModeEnabled);
+                      setEditingCell(null);
+                      setEditValue('');
+                    }}
+                    sx={{
+                      bgcolor: editModeEnabled ? '#10b981' : '#6b7280',
+                      color: '#fff',
+                      '&:hover': {
+                        bgcolor: editModeEnabled ? '#059669' : '#4b5563',
+                      },
+                    }}
+                  >
+                    {editModeEnabled ? <CheckIcon /> : <EditIcon />}
+                  </IconButton>
+                </Tooltip>
+              </Grid>
+            )}
           </Grid>
 
           {viewMode === 'Chart' && (
@@ -702,8 +816,11 @@ const DailyProd = () => {
                   <YAxis />
                   <RechartsTooltip />
                   <Legend />
-                  <Bar dataKey="Auto Mapping" fill="#86efac" />
-                  <Bar dataKey="Manual Mapping" fill="#fb923c" />
+                  <Bar dataKey="Accepted" fill="#86efac" />
+                  <Bar dataKey="Dismissed" fill="#fb923c" />
+                  <Bar dataKey="Duplicates" fill="#fde68a" />
+                  <Bar dataKey="Cannot Be Mapped" fill="#fecaca" />
+                  <Bar dataKey="Created Property" fill="#bfdbfe" />
                   <Bar dataKey="Overall Total" fill="#374151" />
                 </BarChart>
               </ResponsiveContainer>
@@ -719,29 +836,37 @@ const DailyProd = () => {
                   ...user.totals
                 }))}
                 columns={[
-                  { field: 'userName', headerName: 'Team Members', width: 180 },
-                  { field: 'accepted', headerName: 'ACCEPTED', width: 130, type: 'number' },
-                  { field: 'dismissed', headerName: 'DISMISSED', width: 130, type: 'number' },
-                  { field: 'autoMap', headerName: 'AUTO MAP', width: 130, type: 'number' },
-                  { field: 'duplicates', headerName: 'DUPLICATES', width: 130, type: 'number' },
-                  { field: 'manualMap', headerName: 'MANUAL MAP', width: 130, type: 'number' },
-                  { field: 'cannotBeMapped', headerName: 'CANNOT BE MAPPED', width: 170, type: 'number' },
-                  { field: 'createdProperty', headerName: 'CREATED PROPERTY', width: 170, type: 'number' },
-                  { field: 'overallTotal', headerName: 'OVERALL TOTAL', width: 150, type: 'number' }
+                  { field: 'userName', headerName: 'Team Members', width: 200 },
+                  { field: 'accepted', headerName: 'ACCEPTED', width: 150, type: 'number' },
+                  { field: 'dismissed', headerName: 'DISMISSED', width: 150, type: 'number' },
+                  { field: 'duplicates', headerName: 'DUPLICATES', width: 150, type: 'number' },
+                  { field: 'cannotBeMapped', headerName: 'CANNOT BE MAPPED', width: 200, type: 'number' },
+                  { field: 'createdProperty', headerName: 'CREATED PROPERTY', width: 200, type: 'number' },
+                  { field: 'overallTotal', headerName: 'OVERALL TOTAL', width: 180, type: 'number' }
                 ]}
-                components={{ Toolbar: GridToolbar }}
-                pageSize={10}
-                rowsPerPageOptions={[10, 25, 50]}
-                disableSelectionOnClick
+                slots={{ toolbar: GridToolbar }}
+                initialState={{
+                  pagination: {
+                    paginationModel: { pageSize: 10 }
+                  }
+                }}
+                pageSizeOptions={[10, 25, 50]}
+                disableRowSelectionOnClick
                 sx={{
                     '& .MuiDataGrid-root': {
                       backgroundColor: '#fff',
                     },
                     '& .MuiDataGrid-columnHeaders': {
                       backgroundColor: '#374151',
-                      color: '#000',
+                      color: '#fff',
                     },
                     '& .MuiDataGrid-cell': {
+                      color: '#000'
+                    },
+                    '& .MuiDataGrid-row': {
+                      color: '#000'
+                    },
+                    '& .MuiTypography-root': {
                       color: '#000'
                     }
                 }}
@@ -800,8 +925,14 @@ const DailyProd = () => {
                             align="center"
                             bgcolor={bgcolor}
                             color={color}
-                            onClick={(e) => canEdit && handleCellClick(userData.userId, date, e)}
-                            sx={{ cursor: canEdit ? 'pointer' : 'default' }}
+                            onClick={(e) => canEdit && editModeEnabled && handleCellClick(userData.userId, date, e)}
+                            sx={{ 
+                              cursor: canEdit && editModeEnabled ? 'pointer' : 'default',
+                              '&:hover': canEdit && editModeEnabled ? {
+                                outline: '2px solid #3b82f6',
+                                outlineOffset: '-2px'
+                              } : {}
+                            }}
                           >
                             {isEditing ? (
                               <Box 
@@ -812,20 +943,29 @@ const DailyProd = () => {
                                 }}
                                 sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}
                               >
-                                {/* Only show text input if current value is numeric (has overall_total) */}
-                                {entry?.overall_total > 0 && !entry?.status && (
-                                  <TextField
-                                    value={editValue}
-                                    onChange={(e) => setEditValue(e.target.value)}
-                                    onBlur={handleCellBlur}
-                                    onKeyDown={handleKeyPress}
-                                    size="small"
-                                    autoFocus
-                                    sx={{ width: 60 }}
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
+                                {/* Show delete button if there's any data (overall_total, cannot_be_mapped, created_property, etc.) */}
+                                {((entry?.overall_total > 0) || (entry?.cannot_be_mapped > 0) || (entry?.created_property > 0) || (entry?.duplicates > 0)) && !entry?.status && (
+                                  <Tooltip title="Delete entry">
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (window.confirm('Are you sure you want to delete this entry?')) {
+                                          handleDeleteEntry();
+                                        } else {
+                                          setEditingCell(null);
+                                        }
+                                      }}
+                                      sx={{ padding: '4px' }}
+                                    >
+                                      <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
                                 )}
-                                {canEdit && (
+                                {/* Only show status dropdown for empty cells or cells with status */}
+                                {canEdit && (entry?.overall_total === 0 || !!entry?.status) && (
                                   <FormControl 
                                     size="small" 
                                     sx={{ minWidth: 120 }}
@@ -834,8 +974,8 @@ const DailyProd = () => {
                                     <Select
                                       displayEmpty
                                       value=""
-                                      open={entry?.overall_total === 0 || !!entry?.status}
-                                      autoFocus={entry?.overall_total === 0 || !!entry?.status}
+                                      open={true}
+                                      autoFocus={true}
                                       renderValue={() => entry?.status ? "Change Status" : "Set Status"}
                                       MenuProps={{
                                         anchorOrigin: {
