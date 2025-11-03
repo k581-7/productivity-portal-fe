@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/NavBar';
-import LoadingSpinner from '../components/LoadingSpinner';
-const apiUrl = import.meta.env.VITE_API_URL;
+import api from '../../api/axios';
+import Navbar from '../../components/NavBar/NavBar';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import './Suppliers.css';
 
 export default function Suppliers() {
@@ -28,14 +28,8 @@ export default function Suppliers() {
       setLoading(true);
 
       // Fetch current user
-  const userRes = await fetch(`${apiUrl}/api/v1/current_user`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (!userRes.ok) throw new Error('Failed to fetch user');
-
-      const userData = await userRes.json();
-      setUser(userData);
+      const userRes = await api.get('/api/v1/current_user');
+      setUser(userRes.data);
 
       // Fetch suppliers
       await fetchSuppliers();
@@ -50,16 +44,8 @@ export default function Suppliers() {
 
   const fetchSuppliers = async () => {
     try {
-  const res = await fetch(`${apiUrl}/api/v1/suppliers`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setSuppliers(Array.isArray(data) ? data : []);
-      } else {
-        setSuppliers([]);
-      }
+      const res = await api.get('/api/v1/suppliers');
+      setSuppliers(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Error fetching suppliers:', err);
       setSuppliers([]);

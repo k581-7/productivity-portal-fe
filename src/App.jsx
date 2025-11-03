@@ -1,17 +1,18 @@
 import { useEffect, useState, createContext, useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import api from './api/axios';
 import Dashboard from './Dashboard';
-import UserManagement from './pages/UserManagement';
-import PendingUsers from './pages/PendingUsers';
-import LoginButton from './components/LoginButton';
-import LoadingSpinner from './components/LoadingSpinner';
-import ProdEntries from './pages/ProdEntries';
-import Suppliers from './pages/Suppliers';
-import SupplierDetail from './pages/SupplierDetail';
-import SupplierCreate from './pages/SupplierCreate';
-import DailyProd from "./pages/DailyProd";
-import Summary from "./pages/Summary";
-import UploadHistory from "./pages/UploadHistory";
+import UserManagement from './pages/UserManagement/UserManagement';
+import PendingUsers from './pages/PendingUsers/PendingUsers';
+import LoginButton from './components/LoginButton/LoginButton';
+import LoadingSpinner from './components/LoadingSpinner/LoadingSpinner';
+import ProdEntries from './pages/ProdEntries/ProdEntries';
+import Suppliers from './pages/Suppliers/Suppliers';
+import SupplierDetail from './pages/SupplierDetail/SupplierDetail';
+import SupplierCreate from './pages/SupplierCreate/SupplierCreate';
+import DailyProd from './pages/DailyProd/DailyProd';
+import Summary from './pages/Summary/Summary';
+import UploadHistory from './pages/UploadHistory/UploadHistory';
 
 export const UserContext = createContext(null);
 export const useUser = () => useContext(UserContext);
@@ -39,19 +40,8 @@ export default function App() {
           return;
         }
 
-        const apiUrl = import.meta.env.VITE_API_URL;
-        const response = await fetch(`${apiUrl}/api/v1/current_user`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch user data');
-        }
-
-        const data = await response.json();
-        setUser(data);
+        const response = await api.get('/api/v1/current_user');
+        setUser(response.data);
       } catch (error) {
         localStorage.removeItem('token');
         setUser(null);
@@ -124,7 +114,7 @@ export default function App() {
         <Route
           path="/summary"
           element={
-            user && (user.role === 'guest' || user.role === 'leader' || user.role === 'developer') ? (
+            user && (user.role === 'junior' || user.role === 'guest' || user.role === 'leader' || user.role === 'developer') ? (
               <Summary />
             ) : (
               <Navigate to="/dashboard" replace />

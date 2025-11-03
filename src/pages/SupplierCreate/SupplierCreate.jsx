@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/NavBar';
-import './SupplierDetail.css';
+import api from '../../api/axios';
+import Navbar from '../../components/NavBar/NavBar';
 
 export default function SupplierCreate() {
   const [user, setUser] = useState(null);
@@ -50,8 +50,7 @@ export default function SupplierCreate() {
   });
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const navigate = useNavigate();
-    const token = localStorage.getItem('token');
-    const apiUrl = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     if (!token) {
@@ -63,14 +62,10 @@ export default function SupplierCreate() {
 
   const fetchUser = async () => {
     try {
-      const res = await fetch(`${apiUrl}/api/v1/current_user`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Failed to fetch user');
-      const userData = await res.json();
-      setUser(userData);
+      const res = await api.get('/api/v1/current_user');
+      setUser(res.data);
       // Check if user can create suppliers
-      if (userData.role !== 'leader' && userData.role !== 'developer') {
+      if (res.data.role !== 'leader' && res.data.role !== 'developer') {
         showNotification('You do not have permission to create suppliers', 'error');
         setTimeout(() => navigate('/suppliers'), 2000);
       }
@@ -131,24 +126,12 @@ export default function SupplierCreate() {
     };
 
     try {
-      const res = await fetch(`${apiUrl}/api/v1/suppliers`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ supplier: submissionData })
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || errorData.errors?.join(', ') || 'Failed to create supplier');
-      }
-      const newSupplier = await res.json();
+      const res = await api.post('/api/v1/suppliers', { supplier: submissionData });
       showNotification('Supplier created successfully!', 'success');
-      setTimeout(() => navigate(`/suppliers/${newSupplier.id}`), 1500);
+      setTimeout(() => navigate(`/suppliers/${res.data.id}`), 1500);
     } catch (err) {
       console.error('Error creating supplier:', err);
-      showNotification(err.message, 'error');
+      showNotification(err.response?.data?.error || err.response?.data?.errors?.join(', ') || err.message, 'error');
     }
   };
 

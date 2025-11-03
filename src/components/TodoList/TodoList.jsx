@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
+import api from '../../api/axios';
 import './TodoList.css';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const TodoList = () => {
   const [todos, setTodos] = useState([]);
@@ -19,23 +18,11 @@ const TodoList = () => {
     try {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem('token');
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/todos`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch todos');
-      }
-
-      const data = await response.json();
-      setTodos(data);
+      const response = await api.get('/api/v1/todos');
+      setTodos(response.data);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Failed to fetch todos');
       console.error('Error fetching todos:', err);
     } finally {
       setLoading(false);
@@ -49,26 +36,15 @@ const TodoList = () => {
     try {
       setSubmitting(true);
       setError(null);
-      const token = localStorage.getItem('token');
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/todos`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ todo: { content: newTodo } }),
+      const response = await api.post('/api/v1/todos', {
+        todo: { content: newTodo }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create todo');
-      }
-
-      const data = await response.json();
-      setTodos([data, ...todos]); // Add new todo to the top
+      setTodos([response.data, ...todos]); // Add new todo to the top
       setNewTodo(''); // Clear input
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Failed to create todo');
       console.error('Error creating todo:', err);
     } finally {
       setSubmitting(false);
@@ -77,48 +53,23 @@ const TodoList = () => {
 
   const toggleTodo = async (id, completed) => {
     try {
-      const token = localStorage.getItem('token');
-
-      const response = await fetch(`${API_BASE_URL}/api/v1/todos/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ todo: { completed: !completed } }),
+      const response = await api.put(`/api/v1/todos/${id}`, {
+        todo: { completed: !completed }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update todo');
-      }
-
-      const data = await response.json();
-      setTodos(todos.map(todo => todo.id === id ? data : todo));
+      setTodos(todos.map(todo => todo.id === id ? response.data : todo));
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Failed to update todo');
       console.error('Error updating todo:', err);
     }
   };
 
   const deleteTodo = async (id) => {
     try {
-      const token = localStorage.getItem('token');
-
-      const response = await fetch(`${API_BASE_URL}/api/v1/todos/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete todo');
-      }
-
+      await api.delete(`/api/v1/todos/${id}`);
       setTodos(todos.filter(todo => todo.id !== id));
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Failed to delete todo');
       console.error('Error deleting todo:', err);
     }
   };

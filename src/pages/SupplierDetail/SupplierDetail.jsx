@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import Navbar from '../components/NavBar';
+import api from '../../api/axios';
+import Navbar from '../../components/NavBar/NavBar';
+import DeleteIcon from '@mui/icons-material/Delete';
 import './SupplierDetail.css';
 
 export default function SupplierDetail() {
@@ -13,7 +15,6 @@ export default function SupplierDetail() {
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (!token) {
@@ -29,23 +30,13 @@ export default function SupplierDetail() {
       setLoading(true);
 
       // Fetch current user
-  const userRes = await fetch(`${apiUrl}/api/v1/current_user`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (!userRes.ok) throw new Error('Failed to fetch user');
-      const userData = await userRes.json();
-      setUser(userData);
+      const userRes = await api.get('/api/v1/current_user');
+      setUser(userRes.data);
 
       // Fetch supplier details
-  const supplierRes = await fetch(`${apiUrl}/api/v1/suppliers/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (!supplierRes.ok) throw new Error('Failed to fetch supplier');
-      const supplierData = await supplierRes.json();
-      setSupplier(supplierData);
-      setFormData(supplierData);
+      const supplierRes = await api.get(`/api/v1/suppliers/${id}`);
+      setSupplier(supplierRes.data);
+      setFormData(supplierRes.data);
 
       setLoading(false);
     } catch (err) {
@@ -67,27 +58,13 @@ export default function SupplierDetail() {
     e.preventDefault();
 
     try {
-  const res = await fetch(`${apiUrl}/api/v1/suppliers/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ supplier: formData })
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to update supplier');
-      }
-
-      const updatedSupplier = await res.json();
-      setSupplier(updatedSupplier);
+      const res = await api.patch(`/api/v1/suppliers/${id}`, { supplier: formData });
+      setSupplier(res.data);
       setIsEditing(false);
       showNotification('Supplier updated successfully!', 'success');
     } catch (err) {
       console.error('Error updating supplier:', err);
-      showNotification(err.message, 'error');
+      showNotification(err.response?.data?.error || err.message, 'error');
     }
   };
 
@@ -97,15 +74,7 @@ export default function SupplierDetail() {
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/suppliers/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!res.ok) throw new Error('Failed to delete supplier');
-
+      await api.delete(`/api/v1/suppliers/${id}`);
       showNotification('Supplier deleted successfully!', 'success');
       setTimeout(() => navigate('/suppliers'), 1500);
     } catch (err) {
@@ -202,7 +171,7 @@ export default function SupplierDetail() {
                   Edit Supplier
                 </button>
                 <button className="btn-delete" onClick={handleDelete}>
-                  Delete
+                  <DeleteIcon sx={{ fontSize: 18 }} />
                 </button>
               </>
             )}

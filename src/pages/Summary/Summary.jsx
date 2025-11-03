@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-const apiUrl = import.meta.env.VITE_API_URL;
+import api from '../../api/axios';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -15,11 +15,12 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import NavBar from '../components/NavBar';
-import LoadingSpinner from '../components/LoadingSpinner';
+import NavBar from '../../components/NavBar/NavBar';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import './Summary.css';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+// Updated color scheme to match Daily Productivity
+const COLORS = ['#166534', '#991b1b', '#ea580c', '#1e40af', '#854d0e'];
 
 const Summary = ({ user }) => {
   const [summaryData, setSummaryData] = useState(null);
@@ -43,22 +44,12 @@ const Summary = ({ user }) => {
   const fetchSummaryData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${apiUrl}/api/v1/summary/dashboard?start_date=${dateRange.start}&end_date=${dateRange.end}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+      const response = await api.get(
+        `/api/v1/summary/dashboard?start_date=${dateRange.start}&end_date=${dateRange.end}`
       );
-
-      if (!response.ok) throw new Error('Failed to fetch summary data');
-      
-      const data = await response.json();
-      setSummaryData(data);
+      setSummaryData(response.data);
     } catch (error) {
-      // Optionally handle error (e.g., log or set another error state)
+      console.error('Error fetching summary data:', error);
     } finally {
       setLoading(false);
     }
@@ -77,9 +68,9 @@ const Summary = ({ user }) => {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="auto_total" name="Auto Mapping" stroke="#0088FE" />
-            <Line type="monotone" dataKey="manual_total" name="Manual Mapping" stroke="#00C49F" />
-            <Line type="monotone" dataKey="duplicates" name="Duplicates" stroke="#FF8042" />
+            <Line type="monotone" dataKey="auto_total" name="Auto Mapping" stroke="#166534" strokeWidth={2} />
+            <Line type="monotone" dataKey="manual_total" name="Manual Mapping" stroke="#991b1b" strokeWidth={2} />
+            <Line type="monotone" dataKey="duplicates" name="Duplicates" stroke="#ea580c" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -88,21 +79,20 @@ const Summary = ({ user }) => {
 
   const renderUserMetricsChart = () => {
     if (!summaryData?.user_metrics) return null;
-    // Filter out guest users from user_metrics
-    const filteredMetrics = summaryData.user_metrics.filter(u => u.role !== 'guest');
+    // Show all users including guests
     return (
       <div className="chart-container">
         <h2>User Performance</h2>
         <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={filteredMetrics} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <BarChart data={summaryData.user_metrics} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="metrics.auto_total" name="Auto Mapping" fill="#0088FE" />
-            <Bar dataKey="metrics.manual_total" name="Manual Mapping" fill="#00C49F" />
-            <Bar dataKey="metrics.duplicates" name="Duplicates" fill="#FF8042" />
+            <Bar dataKey="metrics.auto_total" name="Auto Mapping" fill="#166534" />
+            <Bar dataKey="metrics.manual_total" name="Manual Mapping" fill="#991b1b" />
+            <Bar dataKey="metrics.duplicates" name="Duplicates" fill="#ea580c" />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import './NavBar.css';
-import logoWhite from '../assets/PP_white.png';
-import { useUser } from '../App';
+import logoWhite from '../../assets/PP_white.png';
+import { useUser } from '../../App';
 
 export default function NavBar() {
   const user = useUser();
@@ -30,8 +30,8 @@ export default function NavBar() {
             {/* Daily Prod - Junior (no edit), Guest (no edit), Leader (can edit), Developer */}
             <Link to="/daily-prod">Daily Prod</Link>
             
-            {/* Summary - Guest, Leader, Developer */}
-            {(user?.role === 'guest' || user?.role === 'leader' || user?.role === 'developer') && (
+            {/* Summary - Junior, Guest, Leader, Developer */}
+            {(user?.role === 'junior' || user?.role === 'guest' || user?.role === 'leader' || user?.role === 'developer') && (
               <Link to="/summary">Summary</Link>
             )}
             

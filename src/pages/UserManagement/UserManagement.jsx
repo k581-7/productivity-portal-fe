@@ -1,9 +1,9 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import NavBar from '../components/NavBar';
+import api from '../../api/axios';
+import NavBar from '../../components/NavBar/NavBar';
 import './UserManagement.css';
-const apiUrl = import.meta.env.VITE_API_URL;
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -18,26 +18,20 @@ export default function UserManagement() {
       console.warn('No token found');
       return;
     }
-    fetch(`${apiUrl}/api/v1/current_user`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => setCurrentUser(data))
-      .catch(err => console.error('Error fetching current user:', err));
+    
+    const fetchData = async () => {
+      try {
+        const currentUserRes = await api.get('/api/v1/current_user');
+        setCurrentUser(currentUserRes.data);
 
-    fetch(`${apiUrl}/api/v1/users`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Forbidden');
-        return res.json();
-      })
-      .then(data => {
-        setUsers(Array.isArray(data) ? data : (data.users || data.data || []));
-      })
-      .catch(err => {
-        console.error('Access denied or error fetching users:', err);
-      });
+        const usersRes = await api.get('/api/v1/users');
+        setUsers(Array.isArray(usersRes.data) ? usersRes.data : (usersRes.data.users || usersRes.data.data || []));
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
+    };
+    
+    fetchData();
   }, [token]);
 
   const roles = [
@@ -47,61 +41,37 @@ export default function UserManagement() {
     { value: 'developer', label: 'Developer' }
   ];
 
-  const updateRole = (id, role) => {
-  fetch(`${apiUrl}/api/v1/users/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ role })
-    })
-      .then(res => res.json())
-      .then(data => {
-        setUsers(prev => prev.map(u => (u.id === id ? { ...u, role: data.user.role } : u)));
-        setDialogId(null);
-        setConfirmAction(null);
-      });
+  const updateRole = async (id, role) => {
+    try {
+      const response = await api.patch(`/api/v1/users/${id}`, { role });
+      setUsers(prev => prev.map(u => (u.id === id ? { ...u, role: response.data.user.role } : u)));
+      setDialogId(null);
+      setConfirmAction(null);
+    } catch (err) {
+      console.error('Error updating role:', err);
+    }
   };
 
-  const disableUser = (id) => {
-  fetch(`${apiUrl}/api/v1/users/${id}/disable`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      }
-    })
-      .then(res => {
-        if (res.ok) {
-          setUsers(prev => prev.map(u => (u.id === id ? { ...u, disabled: true } : u)));
-        }
-        return res.json();
-      })
-      .then(() => {
-        setDialogId(null);
-        setConfirmAction(null);
-      });
+  const disableUser = async (id) => {
+    try {
+      await api.patch(`/api/v1/users/${id}/disable`);
+      setUsers(prev => prev.map(u => (u.id === id ? { ...u, disabled: true } : u)));
+      setDialogId(null);
+      setConfirmAction(null);
+    } catch (err) {
+      console.error('Error disabling user:', err);
+    }
   };
 
-  const activateUser = (id) => {
-  fetch(`${apiUrl}/api/v1/users/${id}/activate`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      }
-    })
-      .then(res => {
-        if (res.ok) {
-          setUsers(prev => prev.map(u => (u.id === id ? { ...u, disabled: false } : u)));
-        }
-        return res.json();
-      })
-      .then(() => {
-        setDialogId(null);
-        setConfirmAction(null);
-      });
+  const activateUser = async (id) => {
+    try {
+      await api.patch(`/api/v1/users/${id}/activate`);
+      setUsers(prev => prev.map(u => (u.id === id ? { ...u, disabled: false } : u)));
+      setDialogId(null);
+      setConfirmAction(null);
+    } catch (err) {
+      console.error('Error activating user:', err);
+    }
   };
 
   const navigate = useNavigate();

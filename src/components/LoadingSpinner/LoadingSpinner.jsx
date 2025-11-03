@@ -1,5 +1,5 @@
 import './LoadingSpinner.css';
-import logoWhite from '../assets/PP_white.png';
+import logoWhite from '../../assets/PP_white.png';
 
 const LoadingSpinner = () => (
   <div className="loading-spinner-container">

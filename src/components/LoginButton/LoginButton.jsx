@@ -1,7 +1,7 @@
 // src/LoginButton.jsx
-import backgroundImage from '../assets/pexels-lara-jameson-8828454.jpg';
-import googleLogo from '../assets/New-Google-Logo-removebg-preview.png';
-import logoGreen from '../assets/PP_green.png';
+import backgroundImage from '../../assets/pexels-lara-jameson-8828454.jpg';
+import googleLogo from '../../assets/New-Google-Logo-removebg-preview.png';
+import logoGreen from '../../assets/PP_green.png';
 
 export default function LoginButton() {
   const handleLogin = () => {

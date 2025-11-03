@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import Navbar from '../components/NavBar';
-import LoadingSpinner from '../components/LoadingSpinner';
+import api from '../../api/axios';
+import Navbar from '../../components/NavBar/NavBar';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import {
   Box,
   Paper,
@@ -84,7 +85,6 @@ const DailyProd = () => {
   const [editModeEnabled, setEditModeEnabled] = useState(false);
 
   const token = localStorage.getItem('token');
-  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (!token) {
@@ -108,17 +108,8 @@ const DailyProd = () => {
 
   const fetchCurrentUser = async () => {
     try {
-  const res = await fetch(`${apiUrl}/api/v1/current_user`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) {
-        console.error('fetchCurrentUser failed', res.status);
-        localStorage.removeItem('token');
-        window.location.href = '/';
-        return;
-      }
-      const userData = await res.json();
-      setUser(userData);
+      const res = await api.get('/api/v1/current_user');
+      setUser(res.data);
     } catch (error) {
       console.error('Error fetching user:', error);
       localStorage.removeItem('token');
@@ -128,29 +119,16 @@ const DailyProd = () => {
 
   const fetchAllUsers = async () => {
     try {
-  const res = await fetch(`${apiUrl}/api/v1/users`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) {
-        console.error('fetchAllUsers failed', res.status);
-        // For junior users, try to fetch from daily_prods endpoint to get all users
-        if (user?.role === 'junior') {
-          console.log('Junior user detected, will fetch users from daily_prods data');
-          setAllUsers([user]); // Temporary, will be populated after fetchDailyProds
-        } else if (user) {
-          setAllUsers([user]);
-        } else {
-          setAllUsers([]);
-        }
-        return;
-      }
-      const payload = await res.json();
-      const users = Array.isArray(payload) ? payload : (payload.users || payload.data || []);
+      const res = await api.get('/api/v1/users');
+      const users = Array.isArray(res.data) ? res.data : (res.data.users || res.data.data || []);
       setAllUsers(users.filter(u => u.id && u.role !== 'guest'));
     } catch (error) {
       console.error('Error fetching users:', error);
-      // Fallback to current user if fetch fails
-      if (user) {
+      // For junior users, try to fetch from daily_prods endpoint to get all users
+      if (user?.role === 'junior') {
+        console.log('Junior user detected, will fetch users from daily_prods data');
+        setAllUsers([user]); // Temporary, will be populated after fetchDailyProds
+      } else if (user) {
         setAllUsers([user]);
       } else {
         setAllUsers([]);
@@ -204,18 +182,9 @@ const DailyProd = () => {
   const fetchDailyProds = async () => {
     try {
       setLoading(true);
-  const response = await fetch(`${apiUrl}/api/v1/daily_prods?month=${selectedMonth}&year=${selectedYear}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get(`/api/v1/daily_prods?month=${selectedMonth}&year=${selectedYear}`);
+      const data = response.data;
       
-      if (!response.ok) {
-        console.error('fetchDailyProds failed', response.status);
-        setDailyProds([]);
-        setLoading(false);
-        return;
-      }
-
-      const data = await response.json();
       console.log('📡 Backend Response Summary:', {
         totalUsers: data.length,
         firstUser: data[0]?.user_name,
@@ -462,26 +431,16 @@ const DailyProd = () => {
         setEditValue('');
         
         // Send DELETE request to backend with properly formatted date
-  const response = await fetch(`${apiUrl}/api/v1/daily_prods/delete_status`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
+        const response = await api.delete('/api/v1/daily_prods/delete_status', {
+          data: {
             user_id: cellToUpdate.userId,
             date: formattedDate  // Use YYYY-MM-DD format
-          })
+          }
         });
 
-        if (response.ok) {
-          console.log('✅ Backend delete successful');
-          // Refresh to get the recalculated totals from prod_entries
-          await fetchDailyProds();
-        } else {
-          const errorData = await response.json();
-          console.error('❌ Backend error clearing status:', errorData);
-        }
+        console.log('✅ Backend delete successful');
+        // Refresh to get the recalculated totals from prod_entries
+        await fetchDailyProds();
         return;
       }
       
@@ -519,23 +478,12 @@ const DailyProd = () => {
       setEditValue('');
       
       // Then send to backend with properly formatted date
-  const response = await fetch(`${apiUrl}/api/v1/daily_prods/update_cell`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          user_id: cellToUpdate.userId,
-          date: formattedDate,  // Use YYYY-MM-DD format
-          value: status,
-          is_status: true
-        })
+      await api.patch('/api/v1/daily_prods/update_cell', {
+        user_id: cellToUpdate.userId,
+        date: formattedDate,  // Use YYYY-MM-DD format
+        value: status,
+        is_status: true
       });
-
-      if (!response.ok) {
-        console.error('Error updating status:', await response.json());
-      }
     } catch (error) {
       console.error('Error in handleStatusSelect:', error);
     }
@@ -591,28 +539,16 @@ const DailyProd = () => {
       setEditValue('');
       
       // Send DELETE request to backend
-      const response = await fetch(`${apiUrl}/api/v1/daily_prods/delete_entry`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
+      await api.delete('/api/v1/daily_prods/delete_entry', {
+        data: {
           user_id: cellToDelete.userId,
           date: cellToDelete.date // Pass as-is (YYYY-MM-DD)
-        })
+        }
       });
 
-      if (response.ok) {
-        console.log('✅ Entry deleted successfully');
-        // Refresh to ensure UI is in sync with backend
-        await fetchDailyProds();
-      } else {
-        const errorData = await response.json();
-        console.error('❌ Backend error deleting entry:', errorData);
-        // Refresh anyway to restore correct state
-        await fetchDailyProds();
-      }
+      console.log('✅ Entry deleted successfully');
+      // Refresh to ensure UI is in sync with backend
+      await fetchDailyProds();
     } catch (error) {
       console.error('Error in handleDeleteEntry:', error);
       // Refresh to restore correct state
@@ -629,24 +565,13 @@ const DailyProd = () => {
     if (!editingCell) return;
 
     try {
-      const response = await fetch(`${apiUrl}/api/v1/daily_prods/update_cell`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          user_id: editingCell.userId,
-          date: editingCell.date,
-          value: editValue
-        })
+      await api.patch('/api/v1/daily_prods/update_cell', {
+        user_id: editingCell.userId,
+        date: editingCell.date,
+        value: editValue
       });
 
-      if (response.ok) {
-        await fetchDailyProds();
-      } else {
-        console.error('Error updating cell:', await response.json());
-      }
+      await fetchDailyProds();
     } catch (error) {
       console.error('Error updating cell:', error);
     }
@@ -816,12 +741,12 @@ const DailyProd = () => {
                   <YAxis />
                   <RechartsTooltip />
                   <Legend />
-                  <Bar dataKey="Accepted" fill="#86efac" />
-                  <Bar dataKey="Dismissed" fill="#fb923c" />
-                  <Bar dataKey="Duplicates" fill="#fde68a" />
-                  <Bar dataKey="Cannot Be Mapped" fill="#fecaca" />
-                  <Bar dataKey="Created Property" fill="#bfdbfe" />
-                  <Bar dataKey="Overall Total" fill="#374151" />
+                  <Bar dataKey="Accepted" fill="#166534" />
+                  <Bar dataKey="Dismissed" fill="#991b1b" />
+                  <Bar dataKey="Duplicates" fill="#ea580c" />
+                  <Bar dataKey="Cannot Be Mapped" fill="#991b1b" />
+                  <Bar dataKey="Created Property" fill="#1e40af" />
+                  <Bar dataKey="Overall Total" fill="#000000" />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
@@ -836,13 +761,65 @@ const DailyProd = () => {
                   ...user.totals
                 }))}
                 columns={[
-                  { field: 'userName', headerName: 'Team Members', width: 200 },
-                  { field: 'accepted', headerName: 'ACCEPTED', width: 150, type: 'number' },
-                  { field: 'dismissed', headerName: 'DISMISSED', width: 150, type: 'number' },
-                  { field: 'duplicates', headerName: 'DUPLICATES', width: 150, type: 'number' },
-                  { field: 'cannotBeMapped', headerName: 'CANNOT BE MAPPED', width: 200, type: 'number' },
-                  { field: 'createdProperty', headerName: 'CREATED PROPERTY', width: 200, type: 'number' },
-                  { field: 'overallTotal', headerName: 'OVERALL TOTAL', width: 180, type: 'number' }
+                  { 
+                    field: 'userName', 
+                    headerName: 'Team Members', 
+                    width: 200,
+                    cellClassName: 'team-members-cell',
+                    headerClassName: 'team-members-header',
+                    headerAlign: 'center',
+                    align: 'center'
+                  },
+                  { 
+                    field: 'accepted', 
+                    headerName: 'ACCEPTED', 
+                    width: 180, 
+                    type: 'number',
+                    cellClassName: 'accepted-cell',
+                    headerClassName: 'accepted-header',
+                    headerAlign: 'center',
+                    align: 'center'
+                  },
+                  { 
+                    field: 'dismissed', 
+                    headerName: 'DISMISSED', 
+                    width: 180, 
+                    type: 'number',
+                    cellClassName: 'dismissed-cell',
+                    headerClassName: 'dismissed-header',
+                    headerAlign: 'center',
+                    align: 'center'
+                  },
+                  { 
+                    field: 'duplicates', 
+                    headerName: 'DUPLICATES', 
+                    width: 180, 
+                    type: 'number',
+                    cellClassName: 'duplicates-cell',
+                    headerClassName: 'duplicates-header',
+                    headerAlign: 'center',
+                    align: 'center'
+                  },
+                  { 
+                    field: 'cannotBeMapped', 
+                    headerName: 'CANNOT BE MAPPED', 
+                    width: 220, 
+                    type: 'number',
+                    cellClassName: 'cannot-be-mapped-cell',
+                    headerClassName: 'cannot-be-mapped-header',
+                    headerAlign: 'center',
+                    align: 'center'
+                  },
+                  { 
+                    field: 'createdProperty', 
+                    headerName: 'CREATED PROPERTY', 
+                    width: 220, 
+                    type: 'number',
+                    cellClassName: 'created-property-cell',
+                    headerClassName: 'created-property-header',
+                    headerAlign: 'center',
+                    align: 'center'
+                  }
                 ]}
                 slots={{ toolbar: GridToolbar }}
                 initialState={{
@@ -860,10 +837,81 @@ const DailyProd = () => {
                       backgroundColor: '#374151',
                       color: '#fff',
                     },
+                    '& .MuiDataGrid-columnHeaderTitle': {
+                      textAlign: 'center',
+                      display: 'block',
+                      width: '100%',
+                      fontWeight: 'bold',
+                    },
                     '& .MuiDataGrid-cell': {
-                      color: '#000'
+                      fontWeight: 600,
+                      textAlign: 'center',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    },
+                    // Team Members - Black header, white background
+                    '& .team-members-header': {
+                      backgroundColor: '#1f2937 !important',
+                      color: '#fff !important',
+                      textAlign: 'center',
+                    },
+                    '& .team-members-cell': {
+                      backgroundColor: '#fff',
+                      color: '#000 !important',
+                    },
+                    // Accepted - Green header, white background
+                    '& .accepted-header': {
+                      backgroundColor: '#166534 !important',
+                      color: '#fff !important',
+                      textAlign: 'center',
+                    },
+                    '& .accepted-cell': {
+                      backgroundColor: '#fff',
+                      color: '#166534 !important',
+                    },
+                    // Dismissed - Red header, white background
+                    '& .dismissed-header': {
+                      backgroundColor: '#991b1b !important',
+                      color: '#fff !important',
+                      textAlign: 'center',
+                    },
+                    '& .dismissed-cell': {
+                      backgroundColor: '#fff',
+                      color: '#991b1b !important',
+                    },
+                    // Duplicates - Orange header, white background
+                    '& .duplicates-header': {
+                      backgroundColor: '#ea580c !important',
+                      color: '#fff !important',
+                      textAlign: 'center',
+                    },
+                    '& .duplicates-cell': {
+                      backgroundColor: '#fff',
+                      color: '#ea580c !important',
+                    },
+                    // Cannot Be Mapped - Red header, white background
+                    '& .cannot-be-mapped-header': {
+                      backgroundColor: '#991b1b !important',
+                      color: '#fff !important',
+                      textAlign: 'center',
+                    },
+                    '& .cannot-be-mapped-cell': {
+                      backgroundColor: '#fff',
+                      color: '#991b1b !important',
+                    },
+                    // Created Property - Blue header, white background
+                    '& .created-property-header': {
+                      backgroundColor: '#1e40af !important',
+                      color: '#fff !important',
+                      textAlign: 'center',
+                    },
+                    '& .created-property-cell': {
+                      backgroundColor: '#fff',
+                      color: '#1e40af !important',
                     },
                     '& .MuiDataGrid-row': {
+                      backgroundColor: '#fff',
                       color: '#000'
                     },
                     '& .MuiTypography-root': {

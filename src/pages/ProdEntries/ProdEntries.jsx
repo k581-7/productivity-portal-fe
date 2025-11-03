@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-const apiUrl = import.meta.env.VITE_API_URL;
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/NavBar';
-import LoadingSpinner from '../components/LoadingSpinner';
+import api from '../../api/axios';
+import Navbar from '../../components/NavBar/NavBar';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import './ProdEntries.css';
 
 export default function ProdEntries() {
@@ -36,34 +36,21 @@ export default function ProdEntries() {
       setLoading(true);
       
       // Fetch current user
-  const userRes = await fetch(`${apiUrl}/api/v1/current_user`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (!userRes.ok) {
-        throw new Error('Failed to fetch user');
-      }
-      
-      const userData = await userRes.json();
-      setUser(userData);
+      const userRes = await api.get('/api/v1/current_user');
+      setUser(userRes.data);
   // No longer need assigned_user_id
       
       // Fetch suppliers with error handling
       try {
-  const suppliersRes = await fetch(`${apiUrl}/api/v1/suppliers`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (suppliersRes.ok) {
-          const suppliersData = await suppliersRes.json();
-          if (Array.isArray(suppliersData)) {
-            setSuppliers(suppliersData);
-          } else {
-            console.warn('Suppliers response is not an array:', suppliersData);
-            setSuppliers([]);
-          }
+        const suppliersRes = await api.get('/api/v1/suppliers');
+        if (Array.isArray(suppliersRes.data)) {
+          // Filter to only show suppliers with 'ongoing' status
+          const ongoingSuppliers = suppliersRes.data.filter(
+            supplier => supplier.status === 'ongoing'
+          );
+          setSuppliers(ongoingSuppliers);
         } else {
-          console.warn('Failed to fetch suppliers, status:', suppliersRes.status);
+          console.warn('Suppliers response is not an array:', suppliersRes.data);
           setSuppliers([]);
         }
       } catch (suppErr) {
@@ -131,27 +118,18 @@ export default function ProdEntries() {
         csv_file: csvFile?.name
       });
 
-      const res = await fetch(`${apiUrl}/api/v1/prod_entries`, {
-        method: 'POST',
+      const res = await api.post('/api/v1/prod_entries', formDataToSend, {
         headers: {
-          Authorization: `Bearer ${token}`
-        },
-        body: formDataToSend
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        console.error('Backend error:', errorData);
-        throw new Error(errorData.error || errorData.errors?.join(', ') || 'Failed to create prod entry');
-      }
-
-      const data = await res.json();
       showNotification('Productivity entry created successfully!', 'success');
       resetForm();
       setCsvFile(null);
     } catch (err) {
       console.error('Error creating prod entry:', err);
-      showNotification(err.message || 'Failed to create entry. Please try again.', 'error');
+      showNotification(err.response?.data?.error || err.response?.data?.errors?.join(', ') || err.message || 'Failed to create entry. Please try again.', 'error');
     }
   };
 
