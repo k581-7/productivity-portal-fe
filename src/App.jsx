@@ -1,5 +1,5 @@
 import { useEffect, useState, createContext, useContext } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import api from './api/axios';
 import Dashboard from './Dashboard';
 import UserManagement from './pages/UserManagement/UserManagement';
@@ -17,20 +17,22 @@ import UploadHistory from './pages/UploadHistory/UploadHistory';
 export const UserContext = createContext(null);
 export const useUser = () => useContext(UserContext);
 
-export default function App() {
+function AppContent() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const checkAuthAndFetchUser = async () => {
       try {
         setIsLoading(true);
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = new URLSearchParams(location.search);
         const tokenFromUrl = urlParams.get('token');
 
         if (tokenFromUrl) {
           localStorage.setItem('token', tokenFromUrl);
-          window.history.replaceState({}, document.title, '/dashboard');
+          navigate('/dashboard', { replace: true });
         }
 
         const token = tokenFromUrl || localStorage.getItem('token');
@@ -50,7 +52,7 @@ export default function App() {
       }
     };
     checkAuthAndFetchUser();
-  }, []);
+  }, [navigate, location.search]);
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -154,4 +156,8 @@ export default function App() {
       </Routes>
     </UserContext.Provider>
   );
+}
+
+export default function App() {
+  return <AppContent />;
 }
