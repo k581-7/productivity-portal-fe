@@ -4,7 +4,9 @@ import googleLogo from '../../assets/New-Google-Logo-removebg-preview.png';
 import logoGreen from '../../assets/PP_green.png';
 
 export default function LoginButton() {
+  console.log('LoginButton component rendered');
   const handleLogin = () => {
+    console.log('Login button clicked');
     const apiUrl = import.meta.env.VITE_API_URL;
     window.location.href = `${apiUrl}/auth/google_oauth2`;
   };
